@@ -4,7 +4,8 @@ import {
   StatusBar, Animated, Modal, FlatList,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { Colors, Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
+import { useColors, useTheme } from '../theme/ThemeContext';
 import FingerButton from '../components/FingerButton';
 import BallResult from '../components/BallResult';
 import BallHistory from '../components/BallHistory';
@@ -14,10 +15,13 @@ import { useGameplay } from '../networking/hooks';
 import { SOCKET_EVENTS } from '../networking/config';
 import { FINGER_NUMBERS } from '../game/gameRules';
 
-const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
+
 
 export default function OnlineGameScreen({ route, navigation }) {
   const { game: initialGame, matches: initialMatches, myPlayerId, isHost } = route.params;
+  const Colors = useColors();
+  const { isDark } = useTheme();
+  const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 
   const [game, setGame] = useState(initialGame);
   const [matches, setMatches] = useState(initialMatches);
@@ -198,8 +202,8 @@ export default function OnlineGameScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient colors={['#0A0A1A', '#12122A', '#0A0A1A']} style={StyleSheet.absoluteFill} />
+      <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
+      <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
 
       {/* 🎉 Celebration overlay */}
       <CelebrationOverlay
@@ -239,7 +243,7 @@ export default function OnlineGameScreen({ route, navigation }) {
         </View>
 
         {/* Team scoreboard */}
-        <TeamScoreboard game={game} team0Color={team0Color} team1Color={team1Color} />
+        <TeamScoreboard game={game} team0Color={team0Color} team1Color={team1Color} Colors={Colors} />
 
         {/* Active matches list */}
         <View style={styles.matchesSection}>
@@ -553,6 +557,27 @@ const styles = StyleSheet.create({
   teamScoreLabel: { fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2 },
   teamScore: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: -2, marginTop: 4 },
   scoreboardDivider: { paddingHorizontal: Spacing.md, alignItems: 'center' },
+  targetBoxOnline: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: 4,
+    borderRadius: BorderRadius.lg,
+    marginHorizontal: Spacing.xs,
+    minHeight: 85,
+  },
+  needBadgeOnline: {
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 2,
+  },
+  needBadgeTextOnline: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+  },
   targetBlock: { alignItems: 'center' },
   targetMiniLabel: { color: Colors.accentGold, fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 1 },
   targetMiniScore: { color: Colors.accentGold, fontSize: Typography.xl, fontWeight: Typography.black },

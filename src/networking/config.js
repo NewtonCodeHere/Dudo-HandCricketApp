@@ -7,7 +7,7 @@
 import { Platform } from 'react-native';
 
 // For physical devices, replace with your computer's LAN IP (e.g. '192.168.1.5')
-const LAN_IP = '192.168.0.206';
+const LAN_IP = '10.158.104.23';
 
 export const SERVER_URL =
   Platform.OS === 'web'

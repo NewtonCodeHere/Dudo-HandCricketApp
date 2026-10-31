@@ -4,12 +4,15 @@ import {
   StatusBar, Animated,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
-
-const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
+import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
+import { useColors, useTheme } from '../theme/ThemeContext';
 
 export default function OnlineGameOverScreen({ route, navigation }) {
-  const { game, winnerTeamId, winnerTeamName, myPlayerId } = route.params;
+  const { game, winnerTeamId, myPlayerId } = route.params;
+  const Colors = useColors();
+  const { isDark } = useTheme();
+
+  const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.7)).current;
@@ -18,7 +21,7 @@ export default function OnlineGameOverScreen({ route, navigation }) {
   const myPlayer = game.players[myPlayerId];
   const winnerTeam = game.teams.find((t) => t.teamId === winnerTeamId);
   const winnerIndex = game.teams.indexOf(winnerTeam);
-  const winnerColor = TEAM_COLORS[winnerIndex % TEAM_COLORS.length];
+  const winnerColor = TEAM_COLORS[winnerIndex % TEAM_COLORS.length] || Colors.primary;
   const myTeam = myPlayer ? game.teams.find((t) => t.players.includes(myPlayerId)) : null;
   const didWin = myTeam?.teamId === winnerTeamId;
 
@@ -38,21 +41,20 @@ export default function OnlineGameOverScreen({ route, navigation }) {
         { iterations: 3 },
       ),
     ]).start();
-  }, []);
+  }, [fadeAnim, scaleAnim, trophyAnim]);
 
   const trophyScale = trophyAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] });
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient colors={['#0A0A1A', '#12122A', '#0A0A1A']} style={StyleSheet.absoluteFill} />
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
+      <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
 
       {/* Winner glow */}
       <View style={[styles.winnerGlow, { backgroundColor: winnerColor }]} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Animated.View style={[styles.content, { opacity: fadeAnim, transform: [{ scale: scaleAnim }] }]}>
-
           {/* Trophy */}
           <Animated.Text style={[styles.trophy, { transform: [{ scale: trophyScale }] }]}>
             {didWin ? '🏆' : '💀'}
@@ -60,21 +62,34 @@ export default function OnlineGameOverScreen({ route, navigation }) {
 
           <Text style={[styles.winnerName, { color: winnerColor }]}>{winnerTeam?.name}</Text>
           <Text style={[styles.winnerLabel, { color: winnerColor }]}>WINS!</Text>
-          <Text style={styles.personalResult}>
+          <Text style={[styles.personalResult, { color: Colors.textSecondary }]}>
             {didWin ? '🎉 You won with your team!' : '😔 Better luck next time!'}
           </Text>
           {myPlayer && (
-            <Text style={styles.myScore}>Your score: {myPlayer.score} runs</Text>
+            <Text style={[styles.myScore, { color: Colors.textMuted }]}>
+              Your score: {myPlayer.score} runs
+            </Text>
           )}
 
           {/* Team scores */}
           <View style={styles.teamScoreCards}>
             {game.teams.map((team, ti) => {
-              const color = TEAM_COLORS[ti % TEAM_COLORS.length];
+              const color = TEAM_COLORS[ti % TEAM_COLORS.length] || Colors.primary;
               const isWinner = team.teamId === winnerTeamId;
               return (
-                <View key={team.teamId} style={[styles.teamScoreCard, { borderColor: color + (isWinner ? 'AA' : '33') }, isWinner && styles.winnerCard]}>
-                  {isWinner && <Text style={styles.winnerBadge}>🏆 WINNER</Text>}
+                <View
+                  key={team.teamId}
+                  style={[
+                    styles.teamScoreCard,
+                    {
+                      backgroundColor: Colors.backgroundCard,
+                      borderColor: isWinner ? color : Colors.border,
+                      borderWidth: isWinner ? 2 : 1,
+                      shadowColor: Colors.shadow,
+                    },
+                  ]}
+                >
+                  {isWinner && <Text style={[styles.winnerBadge, { color }]}>🏆 WINNER</Text>}
                   <Text style={[styles.teamScoreName, { color }]}>{team.name}</Text>
                   <Text style={[styles.teamScoreTotal, { color }]}>{team.totalScore}</Text>
                 </View>
@@ -84,12 +99,22 @@ export default function OnlineGameOverScreen({ route, navigation }) {
 
           {/* Full scorecard */}
           <View style={styles.scorecardSection}>
-            <Text style={styles.scorecardTitle}>PLAYER SCORECARD</Text>
+            <Text style={[styles.scorecardTitle, { color: Colors.textMuted }]}>PLAYER SCORECARD</Text>
             {game.teams.map((team, ti) => {
-              const color = TEAM_COLORS[ti % TEAM_COLORS.length];
+              const color = TEAM_COLORS[ti % TEAM_COLORS.length] || Colors.primary;
               return (
-                <View key={team.teamId} style={styles.scorecardTeam}>
-                  <View style={[styles.scorecardTeamHeader, { backgroundColor: color + '22', borderColor: color + '44' }]}>
+                <View
+                  key={team.teamId}
+                  style={[
+                    styles.scorecardTeam,
+                    {
+                      backgroundColor: Colors.backgroundCard,
+                      borderColor: Colors.border,
+                      shadowColor: Colors.shadow,
+                    },
+                  ]}
+                >
+                  <View style={[styles.scorecardTeamHeader, { backgroundColor: color + '15', borderBottomColor: Colors.border }]}>
                     <Text style={[styles.scorecardTeamName, { color }]}>{team.name}</Text>
                     <Text style={[styles.scorecardTeamTotal, { color }]}>{team.totalScore} total</Text>
                   </View>
@@ -98,11 +123,18 @@ export default function OnlineGameOverScreen({ route, navigation }) {
                     if (!p) return null;
                     const isMe = pid === myPlayerId;
                     return (
-                      <View key={pid} style={[styles.scorecardRow, isMe && styles.scorecardRowMe]}>
-                        <Text style={styles.scorecardPlayerName}>
+                      <View
+                        key={pid}
+                        style={[
+                          styles.scorecardRow,
+                          { borderBottomColor: Colors.border },
+                          isMe && { backgroundColor: color + '12' },
+                        ]}
+                      >
+                        <Text style={[styles.scorecardPlayerName, { color: Colors.textPrimary }]}>
                           {isMe ? '⭐ ' : '  '}{p.name}
                         </Text>
-                        <Text style={styles.scorecardStatus}>{p.status}</Text>
+                        <Text style={[styles.scorecardStatus, { color: Colors.textMuted }]}>{p.status}</Text>
                         <Text style={[styles.scorecardScore, { color }]}>{p.score}</Text>
                       </View>
                     );
@@ -117,9 +149,9 @@ export default function OnlineGameOverScreen({ route, navigation }) {
             <TouchableOpacity
               onPress={() => navigation.navigate('Home')}
               activeOpacity={0.85}
-              style={styles.homeBtnWrapper}
+              style={[styles.homeBtnWrapper, { shadowColor: Colors.shadow }]}
             >
-              <LinearGradient colors={['#6C63FF', '#4C45CC']} style={styles.homeBtn}>
+              <LinearGradient colors={Gradients.primary} style={styles.homeBtn}>
                 <Text style={styles.homeBtnText}>🏠  BACK TO HOME</Text>
               </LinearGradient>
             </TouchableOpacity>
@@ -131,30 +163,42 @@ export default function OnlineGameOverScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   winnerGlow: {
     position: 'absolute', top: -100, alignSelf: 'center',
-    width: 300, height: 300, borderRadius: 150, opacity: 0.06,
+    width: 300, height: 300, borderRadius: 150, opacity: 0.1,
   },
   scroll: { paddingBottom: Spacing['4xl'] },
-  content: { paddingHorizontal: Spacing.xl, paddingTop: 80, alignItems: 'center' },
-  trophy: { fontSize: 80, marginBottom: Spacing.lg },
+  content: { paddingHorizontal: Spacing.xl, paddingTop: 60, alignItems: 'center' },
+  trophy: { fontSize: 72, marginBottom: Spacing.md },
   winnerName: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 2 },
-  winnerLabel: { fontSize: Typography['2xl'], fontWeight: Typography.black, letterSpacing: 4, marginBottom: Spacing.md },
-  personalResult: { color: Colors.textSecondary, fontSize: Typography.md, marginBottom: Spacing.xs },
-  myScore: { color: Colors.textMuted, fontSize: Typography.sm, marginBottom: Spacing['2xl'] },
-  teamScoreCards: { flexDirection: 'row', gap: Spacing.md, width: '100%', marginBottom: Spacing['2xl'] },
+  winnerLabel: { fontSize: Typography['2xl'], fontWeight: Typography.black, letterSpacing: 4, marginBottom: Spacing.sm },
+  personalResult: { fontSize: Typography.md, marginBottom: Spacing.xs, fontWeight: '600' },
+  myScore: { fontSize: Typography.sm, marginBottom: Spacing.xl },
+  teamScoreCards: { flexDirection: 'row', gap: Spacing.md, width: '100%', marginBottom: Spacing.xl },
   teamScoreCard: {
-    flex: 1, backgroundColor: Colors.backgroundCard, borderRadius: BorderRadius.xl,
-    padding: Spacing.lg, alignItems: 'center', borderWidth: 1.5,
+    flex: 1, borderRadius: BorderRadius.xl,
+    padding: Spacing.lg, alignItems: 'center',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
-  winnerCard: { backgroundColor: 'rgba(255,255,255,0.04)' },
   winnerBadge: { fontSize: Typography.xs, fontWeight: Typography.bold, marginBottom: Spacing.xs },
   teamScoreName: { fontSize: Typography.sm, fontWeight: Typography.bold, letterSpacing: 1 },
-  teamScoreTotal: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: -2, marginTop: 4 },
-  scorecardSection: { width: '100%', marginBottom: Spacing['2xl'] },
-  scorecardTitle: { color: Colors.textMuted, fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2, marginBottom: Spacing.md },
-  scorecardTeam: { backgroundColor: Colors.backgroundCard, borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.md, borderWidth: 1, borderColor: Colors.border },
+  teamScoreTotal: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: -1, marginTop: 4 },
+  scorecardSection: { width: '100%', marginBottom: Spacing.xl },
+  scorecardTitle: { fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2, marginBottom: Spacing.md },
+  scorecardTeam: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   scorecardTeamHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, borderBottomWidth: 1,
@@ -164,18 +208,19 @@ const styles = StyleSheet.create({
   scorecardRow: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.sm,
-    borderBottomWidth: 1, borderBottomColor: Colors.border,
+    borderBottomWidth: 1,
   },
-  scorecardRowMe: { backgroundColor: 'rgba(108,99,255,0.08)' },
-  scorecardPlayerName: { flex: 1, color: Colors.textPrimary, fontSize: Typography.base },
-  scorecardStatus: { color: Colors.textMuted, fontSize: Typography.xs, marginRight: Spacing.lg },
+  scorecardPlayerName: { flex: 1, fontSize: Typography.base },
+  scorecardStatus: { fontSize: Typography.xs, marginRight: Spacing.lg },
   scorecardScore: { fontSize: Typography.lg, fontWeight: Typography.black, minWidth: 40, textAlign: 'right' },
   actions: { width: '100%' },
   homeBtnWrapper: {
-    borderRadius: BorderRadius.xl, overflow: 'hidden',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4, shadowRadius: 20, elevation: 12,
+    borderRadius: BorderRadius.full, overflow: 'hidden',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
   },
   homeBtn: { paddingVertical: Spacing.lg, alignItems: 'center' },
-  homeBtnText: { color: '#fff', fontSize: Typography.lg, fontWeight: Typography.bold, letterSpacing: 1 },
+  homeBtnText: { color: '#FFFFFF', fontSize: Typography.base, fontWeight: Typography.bold, letterSpacing: 1 },
 });

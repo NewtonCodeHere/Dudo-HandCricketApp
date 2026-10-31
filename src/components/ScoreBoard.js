@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { useColors, useTheme } from '../theme/ThemeContext';
 
 export default function ScoreBoard({
   playerLabel = 'YOU',
@@ -11,6 +12,8 @@ export default function ScoreBoard({
   isPlayerBatting = true,
   phase,
 }) {
+  const Colors = useColors();
+  const { isDark } = useTheme();
   const playerScaleAnim = useRef(new Animated.Value(1)).current;
   const botScaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -21,75 +24,158 @@ export default function ScoreBoard({
     if (playerScore !== prevPlayerScore.current) {
       prevPlayerScore.current = playerScore;
       Animated.sequence([
-        Animated.spring(playerScaleAnim, { toValue: 1.3, useNativeDriver: true, tension: 300 }),
+        Animated.spring(playerScaleAnim, { toValue: 1.25, useNativeDriver: true, tension: 300 }),
         Animated.spring(playerScaleAnim, { toValue: 1, useNativeDriver: true, tension: 200 }),
       ]).start();
     }
-  }, [playerScore]);
+  }, [playerScore, playerScaleAnim]);
 
   useEffect(() => {
     if (botScore !== prevBotScore.current) {
       prevBotScore.current = botScore;
       Animated.sequence([
-        Animated.spring(botScaleAnim, { toValue: 1.3, useNativeDriver: true, tension: 300 }),
+        Animated.spring(botScaleAnim, { toValue: 1.25, useNativeDriver: true, tension: 300 }),
         Animated.spring(botScaleAnim, { toValue: 1, useNativeDriver: true, tension: 200 }),
       ]).start();
     }
-  }, [botScore]);
+  }, [botScore, botScaleAnim]);
 
-  const runsNeeded = target ? target - botScore : null;
+  const runsNeeded = target !== null ? target - (isPlayerBatting ? playerScore : botScore) : null;
 
   return (
-    <View style={styles.container}>
-      {/* Score row */}
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: Colors.backgroundCard,
+          borderColor: Colors.border,
+          shadowColor: Colors.shadow,
+        },
+      ]}
+    >
+      {/* Three Boxes Row */}
       <View style={styles.scoreRow}>
-        {/* Player */}
-        <View style={[styles.scoreBlock, isPlayerBatting && styles.scoreBlockActive]}>
-          <Text style={styles.teamLabel}>{playerLabel}</Text>
+        {/* Box 1: YOU / Player (Matches Bot box color & styling) */}
+        <View
+          style={[
+            styles.scoreBox,
+            {
+              backgroundColor: isPlayerBatting ? Colors.primaryTint : (isDark ? 'rgba(255,255,255,0.03)' : Colors.backgroundElevated),
+              borderColor: isPlayerBatting ? Colors.primary : Colors.borderLight,
+              borderWidth: 1.5,
+            },
+          ]}
+        >
+          <Text style={[styles.boxLabel, { color: Colors.textSecondary }]}>{playerLabel}</Text>
           <Animated.Text
-            style={[styles.score, { transform: [{ scale: playerScaleAnim }] }]}
+            style={[
+              styles.boxScore,
+              {
+                color: Colors.primary,
+                transform: [{ scale: playerScaleAnim }],
+              },
+            ]}
           >
             {playerScore}
           </Animated.Text>
-          <View style={[styles.badge, isPlayerBatting ? styles.badgeBat : styles.badgeBowl]}>
-            <Text style={styles.badgeText}>{isPlayerBatting ? '🏏 BAT' : '⚾ BOWL'}</Text>
+          <View
+            style={[
+              styles.roleBadge,
+              {
+                backgroundColor: isPlayerBatting ? Colors.primary : Colors.backgroundCard,
+                borderColor: isPlayerBatting ? Colors.primary : Colors.borderLight,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.roleBadgeText,
+                { color: isPlayerBatting ? '#FFFFFF' : Colors.textSecondary },
+              ]}
+            >
+              {isPlayerBatting ? '🏏 BAT' : '⚾ BOWL'}
+            </Text>
           </View>
         </View>
 
-        {/* VS divider */}
-        <View style={styles.divider}>
-          {target !== null ? (
-            <View style={styles.targetContainer}>
-              <Text style={styles.targetLabel}>TARGET</Text>
-              <Text style={styles.targetScore}>{target}</Text>
-              {runsNeeded !== null && runsNeeded > 0 && (
-                <Text style={styles.needText}>Need {runsNeeded}</Text>
-              )}
+        {/* Box 2: TARGET (Different highlight color: Amber Gold) */}
+        <View
+          style={[
+            styles.scoreBox,
+            styles.targetBox,
+            {
+              backgroundColor: isDark ? 'rgba(245, 158, 11, 0.12)' : 'rgba(245, 158, 11, 0.08)',
+              borderColor: Colors.accentGold,
+              borderWidth: 1.5,
+            },
+          ]}
+        >
+          <Text style={[styles.boxLabel, { color: Colors.accentGold, fontWeight: '800' }]}>TARGET</Text>
+          <Text style={[styles.boxScore, { color: Colors.accentGold }]}>
+            {target !== null ? target : '—'}
+          </Text>
+          {target !== null && runsNeeded !== null && runsNeeded > 0 ? (
+            <View style={[styles.needBadge, { backgroundColor: Colors.accentGold }]}>
+              <Text style={styles.needBadgeText}>Need {runsNeeded}</Text>
             </View>
           ) : (
-            <Text style={styles.vsText}>VS</Text>
+            <View style={[styles.needBadge, { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
+              <Text style={[styles.needBadgeText, { color: Colors.textMuted }]}>
+                {target !== null ? 'DEFENDING' : '1st INN'}
+              </Text>
+            </View>
           )}
         </View>
 
-        {/* Bot */}
-        <View style={[styles.scoreBlock, !isPlayerBatting && styles.scoreBlockActive]}>
-          <Text style={styles.teamLabel}>{botLabel}</Text>
+        {/* Box 3: BOT / Opponent (Same color & styling as Player box) */}
+        <View
+          style={[
+            styles.scoreBox,
+            {
+              backgroundColor: !isPlayerBatting ? Colors.primaryTint : (isDark ? 'rgba(255,255,255,0.03)' : Colors.backgroundElevated),
+              borderColor: !isPlayerBatting ? Colors.primary : Colors.borderLight,
+              borderWidth: 1.5,
+            },
+          ]}
+        >
+          <Text style={[styles.boxLabel, { color: Colors.textSecondary }]}>{botLabel}</Text>
           <Animated.Text
-            style={[styles.score, { transform: [{ scale: botScaleAnim }] }]}
+            style={[
+              styles.boxScore,
+              {
+                color: Colors.primary,
+                transform: [{ scale: botScaleAnim }],
+              },
+            ]}
           >
             {botScore}
           </Animated.Text>
-          <View style={[styles.badge, !isPlayerBatting ? styles.badgeBat : styles.badgeBowl]}>
-            <Text style={styles.badgeText}>{!isPlayerBatting ? '🏏 BAT' : '⚾ BOWL'}</Text>
+          <View
+            style={[
+              styles.roleBadge,
+              {
+                backgroundColor: !isPlayerBatting ? Colors.primary : Colors.backgroundCard,
+                borderColor: !isPlayerBatting ? Colors.primary : Colors.borderLight,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.roleBadgeText,
+                { color: !isPlayerBatting ? '#FFFFFF' : Colors.textSecondary },
+              ]}
+            >
+              {!isPlayerBatting ? '🏏 BAT' : '⚾ BOWL'}
+            </Text>
           </View>
         </View>
       </View>
 
       {/* Innings indicator */}
       <View style={styles.inningsRow}>
-        <View style={styles.inningsDot} />
-        <Text style={styles.inningsText}>{phase}</Text>
-        <View style={styles.inningsDot} />
+        <View style={[styles.inningsDot, { backgroundColor: Colors.primary }]} />
+        <Text style={[styles.inningsText, { color: Colors.textMuted }]}>{phase}</Text>
+        <View style={[styles.inningsDot, { backgroundColor: Colors.primary }]} />
       </View>
     </View>
   );
@@ -97,87 +183,70 @@ export default function ScoreBoard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.lg,
-    marginHorizontal: Spacing.lg,
+    borderRadius: BorderRadius['2xl'] || BorderRadius.xl,
+    padding: Spacing.md,
+    marginHorizontal: Spacing.md,
     borderWidth: 1,
-    borderColor: Colors.border,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 3,
   },
   scoreRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'space-between',
+    gap: Spacing.xs,
   },
-  scoreBlock: {
+  scoreBox: {
     flex: 1,
     alignItems: 'center',
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
+    justifyContent: 'space-between',
+    paddingVertical: Spacing.md,
+    paddingHorizontal: 4,
+    borderRadius: BorderRadius.xl,
+    minHeight: 110,
   },
-  scoreBlockActive: {
-    backgroundColor: 'rgba(108, 99, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(108, 99, 255, 0.3)',
+  targetBox: {
+    marginHorizontal: 2,
   },
-  teamLabel: {
-    color: Colors.textSecondary,
-    fontSize: Typography.sm,
+  boxLabel: {
+    fontSize: Typography.xs,
     fontWeight: Typography.bold,
-    letterSpacing: 2,
-    marginBottom: Spacing.xs,
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
   },
-  score: {
-    color: Colors.textPrimary,
-    fontSize: Typography['4xl'],
+  boxScore: {
+    fontSize: Typography['3xl'],
     fontWeight: Typography.black,
-    letterSpacing: -2,
+    lineHeight: Typography['3xl'] * 1.15,
+    marginVertical: 2,
   },
-  badge: {
-    marginTop: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 3,
+  roleBadge: {
     borderRadius: BorderRadius.full,
-  },
-  badgeBat: {
-    backgroundColor: 'rgba(108, 99, 255, 0.2)',
-  },
-  badgeBowl: {
-    backgroundColor: 'rgba(255, 107, 107, 0.15)',
-  },
-  badgeText: {
-    fontSize: Typography.xs,
-    fontWeight: Typography.bold,
-    color: Colors.textSecondary,
-  },
-  divider: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.md,
-  },
-  vsText: {
-    color: Colors.textMuted,
-    fontSize: Typography.lg,
-    fontWeight: Typography.bold,
-  },
-  targetContainer: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderWidth: 1,
+    minWidth: 62,
     alignItems: 'center',
   },
-  targetLabel: {
-    color: Colors.accentGold,
-    fontSize: Typography.xs,
+  roleBadgeText: {
+    fontSize: 10,
     fontWeight: Typography.bold,
-    letterSpacing: 1.5,
+    letterSpacing: 0.5,
   },
-  targetScore: {
-    color: Colors.accentGold,
-    fontSize: Typography['2xl'],
-    fontWeight: Typography.black,
+  needBadge: {
+    borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    minWidth: 62,
+    alignItems: 'center',
   },
-  needText: {
-    color: Colors.accent,
-    fontSize: Typography.xs,
-    fontWeight: Typography.semibold,
-    marginTop: 2,
+  needBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: Typography.bold,
+    letterSpacing: 0.5,
   },
   inningsRow: {
     flexDirection: 'row',
@@ -187,16 +256,14 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   inningsDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   inningsText: {
-    color: Colors.textMuted,
     fontSize: Typography.xs,
-    fontWeight: Typography.semibold,
-    letterSpacing: 1,
+    fontWeight: Typography.bold,
+    letterSpacing: 1.5,
     textTransform: 'uppercase',
   },
 });

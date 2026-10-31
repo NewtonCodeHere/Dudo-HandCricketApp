@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  StatusBar, Animated, Share, Clipboard, TextInput, Alert,
+  StatusBar, Animated, Share, TextInput, Alert, Clipboard,
 } from 'react-native';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius } from '../theme/tokens';
 import { useColors, useTheme } from '../theme/ThemeContext';
 import { useLobby } from '../networking/hooks';
 import { SOCKET_EVENTS } from '../networking/config';
 import SocketClient from '../networking/socket';
-
-const TEAM_COLOR_LIST = ['#6C63FF', '#FF6B6B', '#4ECDC4', '#FFD700'];
 
 export default function LobbyScreen({ route, navigation }) {
   const { game: initialGame, player: initialPlayer, isHost: initialIsHost } = route.params;
@@ -21,12 +20,13 @@ export default function LobbyScreen({ route, navigation }) {
   const [isHost, setIsHost] = useState(initialIsHost);
   const [codeCopied, setCodeCopied] = useState(false);
 
-  // Team rename state — one per team
   const [editingTeamId, setEditingTeamId] = useState(null);
   const [renameValue, setRenameValue] = useState('');
 
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const { joinTeam, setReady, startGame, subscribe } = useLobby();
+
+  const teamColorsList = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 
   useEffect(() => {
     const loop = Animated.loop(
@@ -37,7 +37,7 @@ export default function LobbyScreen({ route, navigation }) {
     );
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [pulseAnim]);
 
   useEffect(() => {
     const unsubLobby = subscribe(SOCKET_EVENTS.LOBBY_UPDATED, ({ game: g }) => {
@@ -52,8 +52,7 @@ export default function LobbyScreen({ route, navigation }) {
       setMyPlayer((p) => ({ ...p, isHost: true }));
     });
     return () => { unsubLobby(); unsubStarted(); unsubYouHost(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation, subscribe, myPlayer.playerId, isHost]);
 
   const handleCopyCode = useCallback(async () => {
     Clipboard.setString(game.gameCode);
@@ -62,7 +61,7 @@ export default function LobbyScreen({ route, navigation }) {
   }, [game.gameCode]);
 
   const handleShare = useCallback(async () => {
-    await Share.share({ message: `Join my Hand Cricket game! Code: ${game.gameCode}` });
+    await Share.share({ message: `Join my DUDO Hand Cricket match! Room Code: ${game.gameCode}` });
   }, [game.gameCode]);
 
   const handleJoinTeam = useCallback((teamId) => {
@@ -76,13 +75,12 @@ export default function LobbyScreen({ route, navigation }) {
   const handleStartGame = useCallback(() => {
     const totalPlayers = Object.keys(game.players).length;
     if (totalPlayers < game.maxPlayers) {
-      Alert.alert('Not enough players', `Need ${game.maxPlayers} players to start. Currently ${totalPlayers}.`);
+      Alert.alert('Waiting for players', `Need ${game.maxPlayers} players to begin match. Currently ${totalPlayers}.`);
       return;
     }
     startGame();
   }, [game, startGame]);
 
-  // ── Team rename handlers ──────────────────────────────────────────────────
   const handleStartRename = (team) => {
     setEditingTeamId(team.teamId);
     setRenameValue(team.name);
@@ -101,46 +99,43 @@ export default function LobbyScreen({ route, navigation }) {
   const totalReady = allPlayers.filter((p) => p.isReady).length;
   const allReady = totalJoined >= game.maxPlayers && totalReady === totalJoined;
 
-  const bgColors = isDark ? ['#0A0A1A', '#12122A'] : ['#F4F4FF', '#EEEEFF'];
-
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
-      <StatusBar barStyle={Colors.statusBar} />
-      <LinearGradient colors={bgColors} style={StyleSheet.absoluteFill} />
+      <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
+      <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
 
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: Colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={[styles.backText, { color: Colors.danger }]}>✕ Leave</Text>
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>LOBBY</Text>
+        <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>MATCH LOBBY</Text>
         <View style={{ width: 60 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-
         {/* Game code card */}
-        <View style={[styles.codeCard, { backgroundColor: Colors.backgroundCard, borderColor: Colors.primary + '44' }]}>
-          <Text style={[styles.codeLabel, { color: Colors.textMuted }]}>GAME CODE</Text>
+        <View style={[styles.codeCard, { backgroundColor: Colors.backgroundCard, borderColor: Colors.borderGlow, shadowColor: Colors.shadow }]}>
+          <Text style={[styles.codeLabel, { color: Colors.textMuted }]}>ROOM CODE</Text>
           <Text style={[styles.codeText, { color: Colors.primary }]}>{game.gameCode}</Text>
           <View style={styles.codeActions}>
             <TouchableOpacity
               onPress={handleCopyCode}
-              style={[styles.codeBtn, { backgroundColor: Colors.backgroundElevated, borderColor: Colors.border }]}
+              style={[styles.codeBtn, { backgroundColor: Colors.primaryTint, borderColor: Colors.borderLight }]}
             >
-              <Text style={[styles.codeBtnText, { color: Colors.textSecondary }]}>
-                {codeCopied ? '✓ Copied' : '📋 Copy'}
+              <Text style={[styles.codeBtnText, { color: Colors.primary }]}>
+                {codeCopied ? '✓ Copied' : '📋 Copy Code'}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleShare}
-              style={[styles.codeBtn, { backgroundColor: Colors.backgroundElevated, borderColor: Colors.border }]}
+              style={[styles.codeBtn, { backgroundColor: Colors.primaryTint, borderColor: Colors.borderLight }]}
             >
-              <Text style={[styles.codeBtnText, { color: Colors.textSecondary }]}>📤 Share</Text>
+              <Text style={[styles.codeBtnText, { color: Colors.primary }]}>📤 Share</Text>
             </TouchableOpacity>
           </View>
           <Text style={[styles.playerCount, { color: Colors.textMuted }]}>
-            {totalJoined}/{game.maxPlayers} players joined
+            {totalJoined}/{game.maxPlayers} players assembled
           </Text>
         </View>
 
@@ -148,7 +143,7 @@ export default function LobbyScreen({ route, navigation }) {
         <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>TEAMS</Text>
 
         {game.teams.map((team, ti) => {
-          const teamColor = TEAM_COLOR_LIST[ti % TEAM_COLOR_LIST.length];
+          const teamColor = teamColorsList[ti % teamColorsList.length];
           const isMyTeam = myPlayer?.teamId === team.teamId;
           const isFull = team.players.length >= game.playersPerTeam;
           const isEditing = editingTeamId === team.teamId;
@@ -160,16 +155,16 @@ export default function LobbyScreen({ route, navigation }) {
                 styles.teamCard,
                 {
                   backgroundColor: Colors.backgroundCard,
-                  borderColor: isMyTeam ? teamColor + '88' : Colors.border,
+                  borderColor: isMyTeam ? teamColor : Colors.border,
                   borderWidth: isMyTeam ? 2 : 1,
+                  shadowColor: Colors.shadow,
                 },
               ]}
             >
               {/* Team header */}
-              <View style={[styles.teamHeader, { backgroundColor: teamColor + (isDark ? '18' : '10') }]}>
+              <View style={[styles.teamHeader, { backgroundColor: teamColor + (isDark ? '20' : '15') }]}>
                 <View style={[styles.teamDot, { backgroundColor: teamColor }]} />
 
-                {/* Editable team name */}
                 {isEditing ? (
                   <View style={styles.renameRow}>
                     <TextInput
@@ -182,7 +177,7 @@ export default function LobbyScreen({ route, navigation }) {
                         {
                           color: teamColor,
                           borderBottomColor: teamColor,
-                          backgroundColor: Colors.inputBg,
+                          backgroundColor: Colors.backgroundCard,
                         },
                       ]}
                       onSubmitEditing={handleConfirmRename}
@@ -265,24 +260,28 @@ export default function LobbyScreen({ route, navigation }) {
           onPress={handleReady}
           style={[
             styles.readyBtn,
-            { backgroundColor: myPlayer?.isReady ? Colors.success + '22' : Colors.backgroundCard, borderColor: myPlayer?.isReady ? Colors.success : Colors.border },
+            {
+              backgroundColor: myPlayer?.isReady ? Colors.primary : Colors.backgroundCard,
+              borderColor: myPlayer?.isReady ? Colors.primary : Colors.border,
+              shadowColor: Colors.shadow,
+            },
           ]}
           activeOpacity={0.8}
         >
-          <Text style={[styles.readyBtnText, { color: myPlayer?.isReady ? Colors.success : Colors.textSecondary }]}>
-            {myPlayer?.isReady ? '✓ READY!' : 'TAP TO READY UP'}
+          <Text style={[styles.readyBtnText, { color: myPlayer?.isReady ? '#FFFFFF' : Colors.textSecondary }]}>
+            {myPlayer?.isReady ? '✓ READY TO PLAY' : 'READY UP'}
           </Text>
         </TouchableOpacity>
 
         {/* Start game (host only) */}
         {isHost && (
-          <TouchableOpacity onPress={handleStartGame} activeOpacity={0.85} style={styles.startBtnWrapper}>
+          <TouchableOpacity onPress={handleStartGame} activeOpacity={0.85} style={[styles.startBtnWrapper, { shadowColor: Colors.shadow }]}>
             <LinearGradient
-              colors={allReady ? [Colors.success, '#2AAF9F'] : [Colors.backgroundElevated, Colors.backgroundElevated]}
+              colors={allReady ? Colors.primaryGradient : [Colors.backgroundElevated, Colors.backgroundElevated]}
               style={styles.startBtn}
             >
-              <Text style={[styles.startBtnText, { color: allReady ? '#fff' : Colors.textMuted }]}>
-                🏏 START GAME
+              <Text style={[styles.startBtnText, { color: allReady ? '#FFFFFF' : Colors.textMuted }]}>
+                START MATCH ›
               </Text>
             </LinearGradient>
           </TouchableOpacity>
@@ -307,24 +306,41 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 60 },
   backText: { fontSize: Typography.base, fontWeight: '600' },
-  headerTitle: { fontSize: Typography.lg, fontWeight: '900', letterSpacing: 3 },
+  headerTitle: { fontSize: Typography.md, fontWeight: '900', letterSpacing: 3 },
   scroll: { padding: Spacing.xl, paddingBottom: 60 },
 
-  // Code card
   codeCard: {
-    borderRadius: BorderRadius.xl, borderWidth: 1.5,
+    borderRadius: BorderRadius['2xl'], borderWidth: 1.5,
     padding: Spacing.xl, alignItems: 'center', marginBottom: Spacing.xl,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  codeLabel: { fontSize: Typography.xs, fontWeight: '700', letterSpacing: 2, marginBottom: Spacing.sm },
-  codeText: { fontSize: 42, fontWeight: '900', letterSpacing: 8, marginBottom: Spacing.lg },
+  codeLabel: { fontSize: Typography.xs, fontWeight: '700', letterSpacing: 2, marginBottom: Spacing.xs },
+  codeText: { fontSize: 38, fontWeight: '900', letterSpacing: 6, marginBottom: Spacing.md },
   codeActions: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.md },
-  codeBtn: { flexDirection: 'row', alignItems: 'center', borderRadius: BorderRadius.lg, paddingVertical: Spacing.sm, paddingHorizontal: Spacing.lg, borderWidth: 1 },
-  codeBtnText: { fontSize: Typography.sm, fontWeight: '600' },
-  playerCount: { fontSize: Typography.sm },
+  codeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: BorderRadius.full,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.lg,
+    borderWidth: 1,
+  },
+  codeBtnText: { fontSize: Typography.sm, fontWeight: '700' },
+  playerCount: { fontSize: Typography.xs, fontWeight: '600' },
 
-  // Team
   sectionTitle: { fontSize: Typography.xs, fontWeight: '700', letterSpacing: 2, marginBottom: Spacing.md },
-  teamCard: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.md },
+  teamCard: {
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   teamHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, gap: Spacing.sm },
   teamDot: { width: 10, height: 10, borderRadius: 5 },
   teamNameRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
@@ -338,7 +354,7 @@ const styles = StyleSheet.create({
   renameConfirmBtn: { padding: Spacing.sm },
   teamCount: { fontSize: Typography.sm, fontWeight: '700' },
   youBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 999 },
-  youBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  youBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   playerRow: {
     flexDirection: 'row', alignItems: 'center', paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm, borderBottomWidth: 1, gap: Spacing.sm,
@@ -347,13 +363,32 @@ const styles = StyleSheet.create({
   playerName: { fontSize: Typography.base, flex: 1 },
   hostBadge: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 },
   hostBadgeText: { fontSize: 10, fontWeight: '700' },
-  joinBtn: { margin: Spacing.lg, borderWidth: 1.5, borderRadius: BorderRadius.lg, padding: Spacing.md, alignItems: 'center', borderStyle: 'dashed' },
-  joinBtnText: { fontSize: Typography.base, fontWeight: '700' },
-  readyBtn: { borderRadius: BorderRadius.xl, borderWidth: 1.5, padding: Spacing.lg, alignItems: 'center', marginTop: Spacing.md, marginBottom: Spacing.md },
-  readyBtnText: { fontSize: Typography.lg, fontWeight: '900', letterSpacing: 2 },
-  startBtnWrapper: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginBottom: Spacing.lg },
+  joinBtn: { margin: Spacing.lg, borderWidth: 1.5, borderRadius: BorderRadius.full, padding: Spacing.md, alignItems: 'center', borderStyle: 'dashed' },
+  joinBtnText: { fontSize: Typography.sm, fontWeight: '700' },
+  readyBtn: {
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    padding: Spacing.lg,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  readyBtnText: { fontSize: Typography.base, fontWeight: '900', letterSpacing: 1.5 },
+  startBtnWrapper: {
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+    marginBottom: Spacing.lg,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 6,
+  },
   startBtn: { padding: Spacing.lg, alignItems: 'center' },
-  startBtnText: { fontSize: Typography.lg, fontWeight: '900', letterSpacing: 1 },
+  startBtnText: { fontSize: Typography.base, fontWeight: '900', letterSpacing: 1 },
   statusRow: { alignItems: 'center', marginTop: Spacing.lg },
   statusText: { fontSize: Typography.sm },
 });

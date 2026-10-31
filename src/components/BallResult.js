@@ -1,8 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated } from 'react-native';
-import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { Text, StyleSheet, Animated } from 'react-native';
+import { Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { useColors } from '../theme/ThemeContext';
 
 export default function BallResult({ ball, visible }) {
+  const Colors = useColors();
   const fadeAnimRef = useRef(new Animated.Value(0));
   const scaleAnimRef = useRef(new Animated.Value(0.5));
   const slideAnimRef = useRef(new Animated.Value(30));
@@ -33,22 +35,26 @@ export default function BallResult({ ball, visible }) {
   if (!ball) return null;
 
   const isOut = ball.isOut;
-  const runColor = isOut ? Colors.danger : Colors.accentGreen;
+  const runColor = isOut ? Colors.danger : Colors.success;
   const resultText = isOut ? '💀 OUT!' : `+${ball.runs}`;
   const resultSubtext = isOut
-    ? `Both chose ${ball.batNumber}`
+    ? `Both picked ${ball.batNumber}`
     : `${ball.batNumber} vs ${ball.bowlNumber}`;
 
   return (
     <Animated.View
       style={[
         styles.container,
-        { opacity: fadeAnim, transform: [{ scale: scaleAnim }, { translateY: slideAnim }] },
-        isOut ? styles.outBg : styles.runBg,
+        {
+          opacity: fadeAnim,
+          transform: [{ scale: scaleAnim }, { translateY: slideAnim }],
+          backgroundColor: isOut ? Colors.primaryAlpha(0.12) : 'rgba(16, 185, 129, 0.12)',
+          borderColor: isOut ? Colors.primary : Colors.success,
+        },
       ]}
     >
       <Text style={[styles.resultText, { color: runColor }]}>{resultText}</Text>
-      <Text style={styles.subtext}>{resultSubtext}</Text>
+      <Text style={[styles.subtext, { color: Colors.textSecondary }]}>{resultSubtext}</Text>
     </Animated.View>
   );
 }
@@ -59,25 +65,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: Spacing.lg,
     paddingHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.xl,
+    borderRadius: BorderRadius['2xl'],
     borderWidth: 2,
     minWidth: 160,
-  },
-  outBg: {
-    backgroundColor: 'rgba(255,107,107,0.15)',
-    borderColor: 'rgba(255,107,107,0.5)',
-  },
-  runBg: {
-    backgroundColor: 'rgba(78, 205, 196, 0.12)',
-    borderColor: 'rgba(78, 205, 196, 0.4)',
   },
   resultText: {
     fontSize: Typography['3xl'],
     fontWeight: Typography.black,
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   subtext: {
-    color: Colors.textSecondary,
     fontSize: Typography.sm,
     fontWeight: Typography.semibold,
     marginTop: Spacing.xs,

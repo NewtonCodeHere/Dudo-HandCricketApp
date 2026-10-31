@@ -4,12 +4,14 @@ import {
   TextInput, Animated, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
+import { useColors } from '../theme/ThemeContext';
 import { useLobby } from '../networking/hooks';
 import { SOCKET_EVENTS } from '../networking/config';
 import * as SocketClient from '../networking/socket';
 
 export default function JoinGameScreen({ navigation }) {
+  const Colors = useColors();
   const [playerName, setPlayerName] = useState('');
   const [gameCode, setGameCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,13 +40,12 @@ export default function JoinGameScreen({ navigation }) {
       shake();
     });
     return () => { unsubJoined(); unsubError(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [navigation, subscribe]);
 
   const handleJoin = () => {
     if (!playerName.trim()) { setError('Enter your name'); shake(); return; }
     const code = gameCode.trim().toUpperCase();
-    if (code.length < 6) { setError('Enter a valid 6-character game code'); shake(); return; }
+    if (code.length < 6) { setError('Enter a valid 6-character room code'); shake(); return; }
     setError('');
     setLoading(true);
     joinGame(code, playerName.trim());
@@ -55,33 +56,45 @@ export default function JoinGameScreen({ navigation }) {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar barStyle="light-content" />
-      <LinearGradient colors={['#0A0A1A', '#12122A']} style={StyleSheet.absoluteFill} />
+      <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
+      <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
 
       <View style={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
+            <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>JOIN GAME</Text>
-          <Text style={styles.subtitle}>Enter the lobby code</Text>
+          <Text style={[styles.title, { color: Colors.textPrimary }]}>JOIN LOBBY</Text>
+          <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>Enter the match code</Text>
         </View>
 
         {/* Illustration */}
         <View style={styles.illustration}>
-          <LinearGradient colors={['#FF6B6B33', '#FF6B6B11']} style={styles.illustrationCircle}>
+          <View
+            style={[
+              styles.illustrationCircle,
+              { backgroundColor: Colors.primaryTint, borderColor: Colors.borderGlow },
+            ]}
+          >
             <Text style={styles.illustrationEmoji}>🔗</Text>
-          </LinearGradient>
+          </View>
         </View>
 
         {/* Form */}
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>YOUR NAME</Text>
+            <Text style={[styles.label, { color: Colors.textMuted }]}>YOUR NICKNAME</Text>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: Colors.backgroundCard,
+                  color: Colors.textPrimary,
+                  borderColor: Colors.border,
+                },
+              ]}
               placeholder="Enter your name..."
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={Colors.inputPlaceholder}
               value={playerName}
               onChangeText={setPlayerName}
               maxLength={16}
@@ -90,42 +103,41 @@ export default function JoinGameScreen({ navigation }) {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>GAME CODE</Text>
+            <Text style={[styles.label, { color: Colors.textMuted }]}>6-DIGIT ROOM CODE</Text>
             <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
               <TextInput
-                style={[styles.input, styles.codeInput, error && gameCode.length < 6 && styles.inputError]}
-                placeholder="e.g. HC7K92"
-                placeholderTextColor={Colors.textMuted}
+                style={[
+                  styles.input,
+                  styles.codeInput,
+                  {
+                    backgroundColor: Colors.backgroundCard,
+                    color: Colors.primary,
+                    borderColor: error && gameCode.length < 6 ? '#EF4444' : Colors.border,
+                  },
+                ]}
+                placeholder="HC7K92"
+                placeholderTextColor={Colors.inputPlaceholder}
                 value={gameCode}
                 onChangeText={(t) => setGameCode(t.toUpperCase())}
-                maxLength={6}
+                maxLength={8}
                 autoCapitalize="characters"
                 autoCorrect={false}
               />
             </Animated.View>
           </View>
 
-          {error ? (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>⚠️ {error}</Text>
-            </View>
-          ) : null}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
           <TouchableOpacity
             onPress={handleJoin}
             disabled={loading}
             activeOpacity={0.85}
-            style={[styles.joinBtnWrapper, loading && { opacity: 0.6 }]}
+            style={[styles.joinBtnWrapper, { shadowColor: Colors.shadow }, loading && { opacity: 0.6 }]}
           >
-            <LinearGradient colors={['#FF6B6B', '#CC3333']} style={styles.joinBtn}>
-              <Text style={styles.joinBtnText}>{loading ? '⏳ Joining...' : '🔗  JOIN LOBBY'}</Text>
+            <LinearGradient colors={Gradients.primary} style={styles.joinBtn}>
+              <Text style={styles.joinBtnText}>{loading ? '⏳ Joining...' : 'ENTER MATCH ›'}</Text>
             </LinearGradient>
           </TouchableOpacity>
-        </View>
-
-        {/* Tip */}
-        <View style={styles.tip}>
-          <Text style={styles.tipText}>💡 Ask your host for the 6-character game code</Text>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -133,47 +145,49 @@ export default function JoinGameScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  content: { flex: 1, paddingTop: 52 },
-  header: { paddingHorizontal: Spacing.xl, marginBottom: Spacing.xl },
-  backBtn: { marginBottom: Spacing.lg },
-  backText: { color: Colors.danger, fontSize: Typography.lg, fontWeight: Typography.semibold },
-  title: { color: Colors.textPrimary, fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 3 },
-  subtitle: { color: Colors.textSecondary, fontSize: Typography.base, marginTop: Spacing.xs },
-  illustration: { alignItems: 'center', marginBottom: Spacing['2xl'] },
+  container: { flex: 1 },
+  content: { flex: 1, padding: Spacing.xl, justifyContent: 'space-between' },
+  header: { paddingTop: 40, marginBottom: Spacing.md },
+  backBtn: { marginBottom: Spacing.sm },
+  backText: { fontSize: Typography.lg, fontWeight: Typography.semibold },
+  title: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 2 },
+  subtitle: { fontSize: Typography.sm, marginTop: 2 },
+  illustration: { alignItems: 'center', marginVertical: Spacing.md },
   illustrationCircle: {
-    width: 110, height: 110, borderRadius: 55,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: Colors.danger + '44',
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
   },
-  illustrationEmoji: { fontSize: 52 },
-  form: { paddingHorizontal: Spacing.xl, gap: Spacing.lg },
-  inputGroup: {},
-  label: { color: Colors.textMuted, fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2, marginBottom: Spacing.sm },
+  illustrationEmoji: { fontSize: 40 },
+  form: { flex: 1, justifyContent: 'center' },
+  inputGroup: { marginBottom: Spacing.lg },
+  label: { fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2, marginBottom: Spacing.sm },
   input: {
-    backgroundColor: Colors.backgroundCard, borderRadius: BorderRadius.lg,
-    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
-    color: Colors.textPrimary, fontSize: Typography.md,
-    borderWidth: 1.5, borderColor: Colors.border,
+    borderRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    fontSize: Typography.base,
+    borderWidth: 1.5,
   },
   codeInput: {
-    fontSize: Typography['2xl'], fontWeight: Typography.black,
-    letterSpacing: 8, textAlign: 'center', paddingVertical: Spacing.lg,
-    color: Colors.danger,
+    fontSize: Typography['2xl'],
+    fontWeight: Typography.black,
+    letterSpacing: 6,
+    textAlign: 'center',
   },
-  inputError: { borderColor: Colors.danger },
-  errorBox: {
-    backgroundColor: 'rgba(255,107,107,0.1)', borderRadius: BorderRadius.md,
-    padding: Spacing.md, borderWidth: 1, borderColor: Colors.danger + '44',
-  },
-  errorText: { color: Colors.danger, fontSize: Typography.sm, textAlign: 'center' },
+  errorText: { color: '#EF4444', textAlign: 'center', marginBottom: Spacing.md, fontSize: Typography.sm },
   joinBtnWrapper: {
-    borderRadius: BorderRadius.xl, overflow: 'hidden',
-    shadowColor: Colors.danger, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4, shadowRadius: 20, elevation: 12, marginTop: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+    marginTop: Spacing.md,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 14,
+    elevation: 6,
   },
   joinBtn: { paddingVertical: Spacing.lg, alignItems: 'center' },
-  joinBtnText: { color: '#fff', fontSize: Typography.lg, fontWeight: Typography.bold, letterSpacing: 1 },
-  tip: { alignItems: 'center', padding: Spacing.xl },
-  tipText: { color: Colors.textMuted, fontSize: Typography.sm, textAlign: 'center' },
+  joinBtnText: { color: '#FFFFFF', fontSize: Typography.base, fontWeight: Typography.bold, letterSpacing: 1.5 },
 });

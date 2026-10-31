@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
+import { useColors, useTheme } from '../theme/ThemeContext';
 
 const steps = [
   {
     emoji: '✌️',
     title: 'Pick a number',
-    desc: 'Both you and your opponent secretly pick a number from 1 to 10 using finger emojis.',
+    desc: 'Both you and your opponent secretly choose a number from 1 to 10.',
   },
   {
     emoji: '🤩',
@@ -22,48 +23,52 @@ const steps = [
   {
     emoji: '🎯',
     title: 'Chase the target',
-    desc: 'After the first innings, the other team chases the target score.',
+    desc: 'After the first innings, the other team chases the target score to win.',
   },
   {
     emoji: '🏆',
-    title: 'Win the game',
-    desc: 'First team to exceed the target wins! If the chasing team gets out first, they lose.',
+    title: 'Win the duel',
+    desc: 'First team or player to exceed the target wins! If all wickets fall first, bowling side wins.',
   },
 ];
 
 const onlineRules = [
-  '🏟️ Multiple 1v1 matches run simultaneously between team players',
-  '📊 Each player\'s score counts towards their team total',
-  '👁️ When you\'re out, watch other ongoing matches as a spectator',
-  '🔒 Both players\' choices are hidden until both have submitted',
-  '⚡ Real-time score updates across all active matches',
+  '🏟️ Simultaneous 1v1 duels run between opposing team members',
+  '📊 Every ball and run directly accumulates into your team total',
+  '👁️ Spectator mode unlocks instantly upon getting OUT',
+  '🔒 Both players submit blindly before the server reveals the ball',
+  '⚡ Low-latency live socket updates across every table',
 ];
 
 export default function HowToPlayScreen({ navigation }) {
+  const Colors = useColors();
+  const { isDark } = useTheme();
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient colors={['#0A0A1A', '#12122A']} style={StyleSheet.absoluteFill} />
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
+      <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
+            <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>HOW TO PLAY</Text>
-          <Text style={styles.subtitle}>Hand Cricket rules</Text>
+          <Text style={[styles.title, { color: Colors.textPrimary }]}>HOW TO PLAY</Text>
+          <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>Rules & Strategy</Text>
         </View>
 
         {/* Basic rules */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>BASICS</Text>
+          <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>THE BASICS</Text>
           {steps.map((s, i) => (
-            <View key={i} style={styles.stepCard}>
-              <View style={styles.stepEmojiBox}>
+            <View key={i} style={[styles.stepCard, { backgroundColor: Colors.backgroundCard, borderColor: Colors.border, shadowColor: Colors.shadow }]}>
+              <View style={[styles.stepEmojiBox, { backgroundColor: isDark ? 'rgba(30,128,255,0.1)' : 'rgba(13,110,253,0.08)' }]}>
                 <Text style={styles.stepEmoji}>{s.emoji}</Text>
               </View>
               <View style={styles.stepContent}>
-                <Text style={styles.stepTitle}>{s.title}</Text>
-                <Text style={styles.stepDesc}>{s.desc}</Text>
+                <Text style={[styles.stepTitle, { color: Colors.textPrimary }]}>{s.title}</Text>
+                <Text style={[styles.stepDesc, { color: Colors.textSecondary }]}>{s.desc}</Text>
               </View>
             </View>
           ))}
@@ -71,16 +76,16 @@ export default function HowToPlayScreen({ navigation }) {
 
         {/* Finger guide */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>FINGER GUIDE</Text>
-          <View style={styles.fingerGuide}>
+          <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>NUMBER BUTTONS</Text>
+          <View style={[styles.fingerGuide, { backgroundColor: Colors.backgroundCard, borderColor: Colors.border, shadowColor: Colors.shadow }]}>
             {[
               ['☝️', '1'], ['✌️', '2'], ['🤟', '3'],
               ['🖖', '4'], ['🖐️', '5'], ['🤙', '6'],
-              ['🤞', '7'], ['🤙', '8'], ['🤚', '9'], ['🙌', '10'],
+              ['🤞', '7'], ['🎱', '8'], ['🤚', '9'], ['🙌', '10'],
             ].map(([emoji, num]) => (
-              <View key={num} style={styles.fingerItem}>
+              <View key={num} style={[styles.fingerItem, { borderColor: Colors.borderLight }]}>
                 <Text style={styles.fingerEmoji}>{emoji}</Text>
-                <Text style={styles.fingerNum}>{num}</Text>
+                <Text style={[styles.fingerNum, { color: Colors.textPrimary }]}>{num}</Text>
               </View>
             ))}
           </View>
@@ -88,17 +93,17 @@ export default function HowToPlayScreen({ navigation }) {
 
         {/* Online rules */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ONLINE MODE</Text>
+          <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>ONLINE MULTIPLAYER</Text>
           {onlineRules.map((rule, i) => (
-            <View key={i} style={styles.ruleItem}>
-              <Text style={styles.ruleText}>{rule}</Text>
+            <View key={i} style={[styles.ruleItem, { backgroundColor: Colors.backgroundCard, borderColor: Colors.border }]}>
+              <Text style={[styles.ruleText, { color: Colors.textSecondary }]}>{rule}</Text>
             </View>
           ))}
         </View>
 
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.doneBtn} activeOpacity={0.8}>
-          <LinearGradient colors={['#6C63FF', '#4C45CC']} style={styles.doneBtnGrad}>
-            <Text style={styles.doneBtnText}>{"Got it! Let's Play 🏏"}</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.doneBtn} activeOpacity={0.85}>
+          <LinearGradient colors={Gradients.primary} style={styles.doneBtnGrad}>
+            <Text style={styles.doneBtnText}>{"GOT IT, LET'S PLAY"}</Text>
           </LinearGradient>
         </TouchableOpacity>
       </ScrollView>
@@ -107,90 +112,70 @@ export default function HowToPlayScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  scroll: { paddingBottom: Spacing['4xl'] },
-  header: {
-    paddingTop: 56,
-    paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing['2xl'],
-  },
-  backBtn: { marginBottom: Spacing.lg },
-  backText: { color: Colors.primary, fontSize: Typography.lg, fontWeight: Typography.semibold },
-  title: { color: Colors.textPrimary, fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 3 },
-  subtitle: { color: Colors.textSecondary, fontSize: Typography.base, marginTop: Spacing.xs },
-
-  section: { paddingHorizontal: Spacing.xl, marginBottom: Spacing['2xl'] },
+  container: { flex: 1 },
+  scroll: { padding: Spacing.xl, paddingTop: 52, paddingBottom: 60 },
+  header: { marginBottom: Spacing.xl },
+  backBtn: { marginBottom: Spacing.sm },
+  backText: { fontSize: Typography.lg, fontWeight: '600' },
+  title: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 2 },
+  subtitle: { fontSize: Typography.sm, marginTop: 2 },
+  section: { marginBottom: Spacing['2xl'] },
   sectionTitle: {
-    color: Colors.textMuted,
     fontSize: Typography.xs,
     fontWeight: Typography.bold,
     letterSpacing: 2,
     marginBottom: Spacing.md,
   },
-
   stepCard: {
     flexDirection: 'row',
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.lg,
+    borderRadius: BorderRadius.xl,
     padding: Spacing.lg,
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
+    alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
-    gap: Spacing.md,
-    alignItems: 'flex-start',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 2,
   },
   stepEmojiBox: {
-    width: 48,
-    height: 48,
+    width: 46,
+    height: 46,
     borderRadius: BorderRadius.md,
-    backgroundColor: 'rgba(108,99,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Spacing.md,
   },
-  stepEmoji: { fontSize: 26 },
+  stepEmoji: { fontSize: 24 },
   stepContent: { flex: 1 },
-  stepTitle: { color: Colors.textPrimary, fontSize: Typography.md, fontWeight: Typography.bold, marginBottom: 4 },
-  stepDesc: { color: Colors.textSecondary, fontSize: Typography.sm, lineHeight: 20 },
-
+  stepTitle: { fontSize: Typography.base, fontWeight: Typography.bold, marginBottom: 2 },
+  stepDesc: { fontSize: Typography.sm, lineHeight: 18 },
   fingerGuide: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.md,
+    borderWidth: 1,
     gap: Spacing.sm,
+    justifyContent: 'space-between',
   },
   fingerItem: {
-    backgroundColor: Colors.backgroundCard,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.md,
+    width: '18%',
     alignItems: 'center',
-    minWidth: 60,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  fingerEmoji: { fontSize: 26 },
-  fingerNum: { color: Colors.textSecondary, fontSize: Typography.sm, fontWeight: Typography.bold, marginTop: 2 },
-
-  ruleItem: {
-    backgroundColor: Colors.backgroundCard,
+    paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.md,
+    borderWidth: 0.5,
+  },
+  fingerEmoji: { fontSize: 22, marginBottom: 2 },
+  fingerNum: { fontSize: Typography.xs, fontWeight: Typography.bold },
+  ruleItem: {
+    borderRadius: BorderRadius.lg,
     padding: Spacing.md,
-    marginBottom: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.primary,
+    marginBottom: Spacing.xs,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
-  ruleText: { color: Colors.textSecondary, fontSize: Typography.sm, lineHeight: 20 },
-
-  doneBtn: {
-    marginHorizontal: Spacing.xl,
-    borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 12,
-  },
+  ruleText: { fontSize: Typography.sm, lineHeight: 18 },
+  doneBtn: { borderRadius: BorderRadius.xl, overflow: 'hidden', marginTop: Spacing.md },
   doneBtnGrad: { paddingVertical: Spacing.lg, alignItems: 'center' },
-  doneBtnText: { color: '#fff', fontSize: Typography.md, fontWeight: Typography.bold },
+  doneBtnText: { color: '#FFFFFF', fontSize: Typography.base, fontWeight: Typography.bold, letterSpacing: 1 },
 });

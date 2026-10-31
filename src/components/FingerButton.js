@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   Animated,
-  View,
 } from 'react-native';
-import { Colors, Typography, BorderRadius } from '../theme/tokens';
+import { Typography, BorderRadius } from '../theme/tokens';
+import { useColors } from '../theme/ThemeContext';
 
 const FINGER_EMOJIS = {
   1: '☝️',
@@ -16,12 +16,13 @@ const FINGER_EMOJIS = {
   5: '🖐️',
   6: '🤙',
   7: '🤞',
-  8: '🤙',
+  8: '🎱',
   9: '🤚',
   10: '🙌',
 };
 
 export default function FingerButton({ number, onPress, selected, disabled, size = 'normal' }) {
+  const Colors = useColors();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
@@ -29,7 +30,7 @@ export default function FingerButton({ number, onPress, selected, disabled, size
     if (selected) {
       Animated.parallel([
         Animated.spring(scaleAnim, {
-          toValue: 1.15,
+          toValue: 1.12,
           useNativeDriver: true,
           tension: 200,
           friction: 10,
@@ -55,19 +56,19 @@ export default function FingerButton({ number, onPress, selected, disabled, size
         }),
       ]).start();
     }
-  }, [selected]);
+  }, [selected, glowAnim, scaleAnim]);
 
   const handlePress = () => {
     if (disabled) return;
     Animated.sequence([
       Animated.spring(scaleAnim, {
-        toValue: 0.9,
+        toValue: 0.92,
         useNativeDriver: true,
         tension: 300,
         friction: 10,
       }),
       Animated.spring(scaleAnim, {
-        toValue: selected ? 1.15 : 1,
+        toValue: selected ? 1.12 : 1,
         useNativeDriver: true,
         tension: 200,
         friction: 10,
@@ -77,14 +78,9 @@ export default function FingerButton({ number, onPress, selected, disabled, size
   };
 
   const isSmall = size === 'small';
-  const buttonSize = isSmall ? 58 : 68;
+  const buttonSize = isSmall ? 56 : 66;
   const emojiSize = isSmall ? 22 : 26;
   const numberSize = isSmall ? Typography.xs : Typography.sm;
-
-  const glowColor = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['transparent', 'rgba(108, 99, 255, 0.4)'],
-  });
 
   return (
     <Animated.View
@@ -100,21 +96,29 @@ export default function FingerButton({ number, onPress, selected, disabled, size
         activeOpacity={0.8}
         style={[
           styles.button,
-          { width: buttonSize, height: buttonSize },
+          {
+            width: buttonSize,
+            height: buttonSize,
+            backgroundColor: selected ? Colors.primary : Colors.primaryTint,
+            borderColor: selected ? Colors.primaryDark : Colors.borderLight,
+            shadowColor: Colors.shadow,
+          },
           selected && styles.selected,
           disabled && styles.disabled,
         ]}
       >
-        <Animated.View
-          style={[
-            styles.glowRing,
-            { width: buttonSize + 8, height: buttonSize + 8, borderColor: glowColor },
-          ]}
-        />
         <Text style={[styles.emoji, { fontSize: emojiSize }]}>
-          {FINGER_EMOJIS[number]}
+          {FINGER_EMOJIS[number] || number}
         </Text>
-        <Text style={[styles.number, { fontSize: numberSize }, selected && styles.numberSelected]}>
+        <Text
+          style={[
+            styles.number,
+            {
+              fontSize: numberSize,
+              color: selected ? '#FFFFFF' : Colors.textPrimary,
+            },
+          ]}
+        >
           {number}
         </Text>
       </TouchableOpacity>
@@ -128,43 +132,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  glowRing: {
-    position: 'absolute',
-    borderRadius: BorderRadius.full,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
   button: {
-    borderRadius: BorderRadius.full,
-    backgroundColor: 'rgba(108, 99, 255, 0.12)',
+    borderRadius: BorderRadius.xl,
     borderWidth: 1.5,
-    borderColor: 'rgba(108, 99, 255, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 2,
   },
   selected: {
-    backgroundColor: 'rgba(108, 99, 255, 0.35)',
-    borderColor: Colors.primary,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   disabled: {
-    opacity: 0.3,
+    opacity: 0.35,
   },
   emoji: {
     lineHeight: 30,
   },
   number: {
-    color: Colors.textSecondary,
     fontWeight: Typography.bold,
-    fontSize: Typography.xs,
     marginTop: -2,
-  },
-  numberSelected: {
-    color: Colors.primary,
   },
 });

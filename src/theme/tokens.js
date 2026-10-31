@@ -1,129 +1,199 @@
 /**
- * Hand Cricket — Complete theme system.
- * Dark and Light palettes with full token sets.
+ * DUDO Hand Cricket — Theme System.
+ * Matches the Coral Red modern mobile UI reference design.
+ * Full support for Light/Dark modes & User-Customizable Accent Color.
  */
 
-export const DarkColors = {
-  // Core
-  primary: '#6C63FF',
-  primaryDark: '#4C45CC',
-  primaryLight: '#9B95FF',
+export const DEFAULT_ACCENT = '#FF5A5F'; // Coral Red from reference image
 
-  // Accents
-  accent: '#FF6B6B',
-  accentGold: '#FFD700',
-  accentGreen: '#4ECDC4',
-  accentOrange: '#FF8C42',
+export const ACCENT_PRESETS = [
+  { id: 'coral', name: 'Coral Red', color: '#FF5A5F' },
+  { id: 'crimson', name: 'Crimson', color: '#E11D48' },
+  { id: 'electric-blue', name: 'Electric Blue', color: '#0D6EFD' },
+  { id: 'emerald', name: 'Emerald', color: '#10B981' },
+  { id: 'purple', name: 'Royal Violet', color: '#8B5CF6' },
+  { id: 'orange', name: 'Cyber Orange', color: '#F97316' },
+  { id: 'pink', name: 'Neon Pink', color: '#EC4899' },
+  { id: 'gold', name: 'Amber Gold', color: '#F59E0B' },
+  { id: 'slate', name: 'Midnight Slate', color: '#334155' },
+];
 
-  // Background layers
-  background: '#0A0A1A',
-  backgroundCard: '#12122A',
-  backgroundElevated: '#1A1A35',
-  backgroundGlass: 'rgba(255,255,255,0.06)',
+function hexToRgb(hex) {
+  let c = hex.replace('#', '');
+  if (c.length === 3) c = c.split('').map((x) => x + x).join('');
+  const num = parseInt(c, 16);
+  return {
+    r: (num >> 16) & 255,
+    g: (num >> 8) & 255,
+    b: num & 255,
+  };
+}
 
-  // Text
-  textPrimary: '#FFFFFF',
-  textSecondary: '#A8A8C8',
-  textMuted: '#5A5A7A',
-  textAccent: '#6C63FF',
+function adjustColor(hex, factor) {
+  const { r, g, b } = hexToRgb(hex);
+  const clamp = (val) => Math.min(255, Math.max(0, Math.round(val)));
+  const nr = clamp(r * factor);
+  const ng = clamp(g * factor);
+  const nb = clamp(b * factor);
+  return `#${((1 << 24) + (nr << 16) + (ng << 8) + nb).toString(16).slice(1)}`;
+}
 
-  // Teams
-  teamA: '#6C63FF',
-  teamALight: 'rgba(108, 99, 255, 0.15)',
-  teamB: '#FF6B6B',
-  teamBLight: 'rgba(255, 107, 107, 0.15)',
+export function buildPalette(isDark, primary = DEFAULT_ACCENT) {
+  const { r, g, b } = hexToRgb(primary);
+  const primaryDark = adjustColor(primary, 0.78);
+  const primaryLight = adjustColor(primary, 1.25);
+  const primaryAlpha = (a) => `rgba(${r}, ${g}, ${b}, ${a})`;
 
-  // States
-  success: '#4ECDC4',
-  danger: '#FF6B6B',
-  warning: '#FFD700',
-  info: '#64B5F6',
+  if (isDark) {
+    return {
+      // Primary custom accent
+      primary,
+      primaryDark,
+      primaryLight,
+      primaryGradient: [primary, primaryDark],
+      primaryTint: primaryAlpha(0.15),
+      primaryAlpha,
 
-  // Borders
-  border: 'rgba(255,255,255,0.08)',
-  borderLight: 'rgba(255,255,255,0.15)',
+      // Complementary accents
+      accent: '#FF4D6D',
+      accentCyan: '#06B6D4',
+      accentGold: '#F59E0B',
+      accentGreen: '#10B981',
+      accentOrange: '#F97316',
 
-  // Score
-  runs: '#4ECDC4',
-  out: '#FF6B6B',
+      // Backgrounds (Clean deep charcoal/black like dark screens in reference)
+      background: '#121216',
+      backgroundCard: '#1C1C22',
+      backgroundCardTint: primaryAlpha(0.14),
+      backgroundElevated: '#25252E',
+      backgroundGlass: 'rgba(255, 255, 255, 0.05)',
+      backgroundGlassHighlight: primaryAlpha(0.18),
 
-  // Input
-  inputBg: '#1A1A35',
-  inputText: '#FFFFFF',
-  inputPlaceholder: '#5A5A7A',
-  inputBorder: 'rgba(255,255,255,0.12)',
+      // Text
+      textPrimary: '#FFFFFF',
+      textSecondary: '#A1A1AA',
+      textMuted: '#71717A',
+      textAccent: primary,
 
-  // Shadow
-  shadow: '#000000',
+      // Teams
+      teamA: primary,
+      teamALight: primaryAlpha(0.2),
+      teamB: '#06B6D4',
+      teamBLight: 'rgba(6, 182, 212, 0.2)',
 
-  // Status bar
-  statusBar: 'light-content',
+      // States
+      success: '#10B981',
+      danger: primary,
+      warning: '#F59E0B',
+      info: '#38BDF8',
 
-  // Card gradient
-  cardGradientStart: '#12122A',
-  cardGradientEnd: '#1A1A35',
-};
+      // Borders
+      border: 'rgba(255, 255, 255, 0.08)',
+      borderLight: 'rgba(255, 255, 255, 0.15)',
+      borderGlow: primaryAlpha(0.35),
 
-export const LightColors = {
-  // Core
-  primary: '#6C63FF',
-  primaryDark: '#4C45CC',
-  primaryLight: '#9B95FF',
+      // Score
+      runs: '#10B981',
+      out: primary,
 
-  // Accents
-  accent: '#FF6B6B',
-  accentGold: '#E6A800',
-  accentGreen: '#2AAF9F',
-  accentOrange: '#FF8C42',
+      // Input
+      inputBg: '#1C1C22',
+      inputText: '#FFFFFF',
+      inputPlaceholder: '#71717A',
+      inputBorder: 'rgba(255, 255, 255, 0.12)',
 
-  // Background layers
-  background: '#F4F4FF',
-  backgroundCard: '#FFFFFF',
-  backgroundElevated: '#EEEEFF',
-  backgroundGlass: 'rgba(108,99,255,0.05)',
+      // Shadow
+      shadow: primaryDark,
 
-  // Text
-  textPrimary: '#12122A',
-  textSecondary: '#4A4A6A',
-  textMuted: '#9A9ABB',
-  textAccent: '#6C63FF',
+      // Status bar
+      statusBar: 'light-content',
 
-  // Teams
-  teamA: '#6C63FF',
-  teamALight: 'rgba(108, 99, 255, 0.1)',
-  teamB: '#FF6B6B',
-  teamBLight: 'rgba(255, 107, 107, 0.1)',
+      // Gradients
+      cardGradientStart: '#1C1C22',
+      cardGradientEnd: '#25252E',
+      gradientBg: ['#121216', '#1A1A22', '#121216'],
+      pillBtnBg: primary,
+      pillBtnText: '#FFFFFF',
+      glow: primaryAlpha(0.3),
+    };
+  }
 
-  // States
-  success: '#2AAF9F',
-  danger: '#E84040',
-  warning: '#E6A800',
-  info: '#2196F3',
+  // Light Mode (Crisp white with soft warm blush tints from reference)
+  return {
+    // Primary custom accent
+    primary,
+    primaryDark,
+    primaryLight,
+    primaryGradient: [primary, primaryDark],
+    primaryTint: primaryAlpha(0.08),
+    primaryAlpha,
 
-  // Borders
-  border: 'rgba(0,0,0,0.08)',
-  borderLight: 'rgba(0,0,0,0.15)',
+    // Complementary accents
+    accent: '#FF3366',
+    accentCyan: '#00B8D4',
+    accentGold: '#D97706',
+    accentGreen: '#059669',
+    accentOrange: '#EA580C',
 
-  // Score
-  runs: '#2AAF9F',
-  out: '#E84040',
+    // Backgrounds (Clean porcelain white & soft blush card backgrounds)
+    background: '#F9FAFB',
+    backgroundCard: '#FFFFFF',
+    backgroundCardTint: primaryAlpha(0.07),
+    backgroundElevated: '#F3F4F6',
+    backgroundGlass: 'rgba(255, 255, 255, 0.9)',
+    backgroundGlassHighlight: primaryAlpha(0.1),
 
-  // Input
-  inputBg: '#FFFFFF',
-  inputText: '#12122A',
-  inputPlaceholder: '#9A9ABB',
-  inputBorder: 'rgba(0,0,0,0.12)',
+    // Text
+    textPrimary: '#111827',
+    textSecondary: '#4B5563',
+    textMuted: '#9CA3AF',
+    textAccent: primary,
 
-  // Shadow
-  shadow: '#6C63FF',
+    // Teams
+    teamA: primary,
+    teamALight: primaryAlpha(0.12),
+    teamB: '#0284C7',
+    teamBLight: 'rgba(2, 132, 199, 0.12)',
 
-  // Status bar
-  statusBar: 'dark-content',
+    // States
+    success: '#059669',
+    danger: primary,
+    warning: '#D97706',
+    info: '#0284C7',
 
-  // Card gradient
-  cardGradientStart: '#FFFFFF',
-  cardGradientEnd: '#F0F0FF',
-};
+    // Borders
+    border: 'rgba(17, 24, 39, 0.07)',
+    borderLight: 'rgba(17, 24, 39, 0.12)',
+    borderGlow: primaryAlpha(0.25),
+
+    // Score
+    runs: '#059669',
+    out: primary,
+
+    // Input
+    inputBg: '#FFFFFF',
+    inputText: '#111827',
+    inputPlaceholder: '#9CA3AF',
+    inputBorder: 'rgba(17, 24, 39, 0.12)',
+
+    // Shadow
+    shadow: primaryAlpha(0.35),
+
+    // Status bar
+    statusBar: 'dark-content',
+
+    // Gradients
+    cardGradientStart: '#FFFFFF',
+    cardGradientEnd: '#FFF5F5',
+    gradientBg: ['#FFFFFF', '#FAF5F5', '#F5F5F7'],
+    pillBtnBg: primary,
+    pillBtnText: '#FFFFFF',
+    glow: primaryAlpha(0.15),
+  };
+}
+
+export const DarkColors = buildPalette(true, DEFAULT_ACCENT);
+export const LightColors = buildPalette(false, DEFAULT_ACCENT);
 
 export const Typography = {
   xs: 11,
@@ -156,22 +226,24 @@ export const Spacing = {
 };
 
 export const BorderRadius = {
-  xs: 4,
-  sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  '2xl': 24,
+  xs: 6,
+  sm: 10,
+  md: 14,
+  lg: 18,
+  xl: 22,
+  '2xl': 28,
   full: 9999,
 };
 
 export const Gradients = {
-  primary: ['#6C63FF', '#4C45CC'],
-  danger: ['#FF6B6B', '#CC3333'],
-  success: ['#4ECDC4', '#2EAA9D'],
-  gold: ['#FFD700', '#FFA500'],
-  dark: ['#0A0A1A', '#12122A'],
-  card: ['#12122A', '#1A1A35'],
+  primary: [DEFAULT_ACCENT, '#D73C41'],
+  danger: ['#FF5A5F', '#BE123C'],
+  success: ['#10B981', '#047857'],
+  gold: ['#F59E0B', '#D97706'],
+  dark: ['#121216', '#1C1C22'],
+  card: ['#1C1C22', '#25252E'],
+  lightCard: ['#FFFFFF', '#FFF5F5'],
+  light: ['#FFFFFF', '#F5F5F7'],
 };
 
 // Default export for backward compat

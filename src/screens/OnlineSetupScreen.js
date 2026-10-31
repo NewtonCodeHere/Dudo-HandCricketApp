@@ -1,58 +1,78 @@
 import React from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
-
+import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
+import { useColors } from '../theme/ThemeContext';
 
 export default function OnlineSetupScreen({ navigation }) {
+  const Colors = useColors();
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <LinearGradient colors={['#0A0A1A', '#12122A']} style={StyleSheet.absoluteFill} />
+    <View style={[styles.container, { backgroundColor: Colors.background }]}>
+      <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
+      <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-            <Text style={styles.backText}>‹ Back</Text>
+            <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>ONLINE MODE</Text>
-          <Text style={styles.subtitle}>Real-time multiplayer</Text>
+          <Text style={[styles.title, { color: Colors.textPrimary }]}>ONLINE ARENA</Text>
+          <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>
+            Real-time Multiplayer Duels
+          </Text>
         </View>
 
         {/* Mode cards */}
         <View style={styles.modes}>
           <ModeCard
             emoji="🏟️"
-            title="HOST GAME"
-            desc="Create a new lobby, invite friends and control game settings."
-            gradient={['#6C63FF', '#4C45CC']}
+            title="CREATE LOBBY"
+            desc="Host a new room, share the code, and customize match settings."
+            gradient={Gradients.primary}
             onPress={() => navigation.navigate('CreateGame')}
+            Colors={Colors}
           />
           <ModeCard
             emoji="🔗"
-            title="JOIN GAME"
-            desc="Enter a 6-character game code to join a friend's lobby."
-            gradient={['#FF6B6B', '#CC3333']}
+            title="JOIN WITH CODE"
+            desc="Enter a 6-letter lobby code to battle your friends."
+            gradient={['#00B8D4', '#0052D4']}
             onPress={() => navigation.navigate('JoinGame')}
+            Colors={Colors}
           />
         </View>
 
         {/* Feature list */}
         <View style={styles.featureSection}>
-          <Text style={styles.featureTitle}>HOW IT WORKS</Text>
+          <Text style={[styles.featureTitle, { color: Colors.textMuted }]}>HOW IT WORKS</Text>
           {[
-            { icon: '⚡', text: 'Multiple 1v1 matches run simultaneously' },
-            { icon: '📊', text: 'Each player\'s score builds the team total' },
-            { icon: '🔒', text: 'Choices are hidden until both submit' },
-            { icon: '👁️', text: 'Spectate other matches when you\'re out' },
-            { icon: '🔄', text: 'Automatic reconnect if you disconnect' },
+            { icon: '⚡', text: 'Simultaneous 1v1 duels between team members' },
+            { icon: '📊', text: 'Every run scored builds towards your team target' },
+            { icon: '🔒', text: 'Secret ball submission prevents peeking' },
+            { icon: '👁️', text: 'Switch to spectator mode seamlessly when out' },
+            { icon: '🔄', text: 'Auto reconnection with state recovery' },
           ].map((f, i) => (
-            <View key={i} style={styles.featureItem}>
+            <View
+              key={i}
+              style={[
+                styles.featureItem,
+                {
+                  backgroundColor: Colors.backgroundCard,
+                  borderColor: Colors.border,
+                  shadowColor: Colors.shadow,
+                },
+              ]}
+            >
               <Text style={styles.featureIcon}>{f.icon}</Text>
-              <Text style={styles.featureText}>{f.text}</Text>
+              <Text style={[styles.featureText, { color: Colors.textSecondary }]}>{f.text}</Text>
             </View>
           ))}
         </View>
@@ -61,10 +81,19 @@ export default function OnlineSetupScreen({ navigation }) {
   );
 }
 
-function ModeCard({ emoji, title, desc, gradient, onPress }) {
+function ModeCard({ emoji, title, desc, gradient, onPress, Colors }) {
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.modeCardWrapper}>
-      <LinearGradient colors={gradient} style={styles.modeCard} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.85}
+      style={[styles.modeCardWrapper, { shadowColor: Colors.shadow }]}
+    >
+      <LinearGradient
+        colors={gradient}
+        style={styles.modeCard}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
         <Text style={styles.modeEmoji}>{emoji}</Text>
         <View style={styles.modeContent}>
           <Text style={styles.modeTitle}>{title}</Text>
@@ -77,39 +106,58 @@ function ModeCard({ emoji, title, desc, gradient, onPress }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
+  container: { flex: 1 },
   scroll: { paddingBottom: Spacing['4xl'] },
   header: { paddingTop: 56, paddingHorizontal: Spacing.xl, marginBottom: Spacing['2xl'] },
-  backBtn: { marginBottom: Spacing.lg },
-  backText: { color: Colors.primary, fontSize: Typography.lg, fontWeight: Typography.semibold },
-  title: { color: Colors.textPrimary, fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 3 },
-  subtitle: { color: Colors.textSecondary, fontSize: Typography.base, marginTop: Spacing.xs },
+  backBtn: { marginBottom: Spacing.sm },
+  backText: { fontSize: Typography.lg, fontWeight: Typography.semibold },
+  title: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 2 },
+  subtitle: { fontSize: Typography.sm, marginTop: 2 },
   modes: { paddingHorizontal: Spacing.xl, gap: Spacing.md, marginBottom: Spacing['2xl'] },
   modeCardWrapper: {
-    borderRadius: BorderRadius.xl, overflow: 'hidden',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3, shadowRadius: 16, elevation: 10,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 6,
   },
   modeCard: {
-    flexDirection: 'row', alignItems: 'center',
-    padding: Spacing.xl, gap: Spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.xl,
+    gap: Spacing.lg,
   },
-  modeEmoji: { fontSize: 36 },
+  modeEmoji: { fontSize: 34 },
   modeContent: { flex: 1 },
-  modeTitle: { color: '#fff', fontSize: Typography.lg, fontWeight: Typography.bold },
-  modeDesc: { color: 'rgba(255,255,255,0.7)', fontSize: Typography.sm, marginTop: 4, lineHeight: 18 },
-  modeArrow: { color: 'rgba(255,255,255,0.6)', fontSize: Typography['2xl'] },
+  modeTitle: { color: '#FFFFFF', fontSize: Typography.md, fontWeight: Typography.bold, letterSpacing: 0.5 },
+  modeDesc: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: Typography.xs,
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  modeArrow: { color: 'rgba(255,255,255,0.7)', fontSize: Typography['2xl'] },
   featureSection: { paddingHorizontal: Spacing.xl },
   featureTitle: {
-    color: Colors.textMuted, fontSize: Typography.xs, fontWeight: Typography.bold,
-    letterSpacing: 2, marginBottom: Spacing.md,
+    fontSize: Typography.xs,
+    fontWeight: Typography.bold,
+    letterSpacing: 2,
+    marginBottom: Spacing.md,
   },
   featureItem: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
-    backgroundColor: Colors.backgroundCard, borderRadius: BorderRadius.md,
-    padding: Spacing.md, marginBottom: Spacing.sm,
-    borderWidth: 1, borderColor: Colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+    marginBottom: Spacing.sm,
+    gap: Spacing.md,
+    borderWidth: 1,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   featureIcon: { fontSize: 20 },
-  featureText: { color: Colors.textSecondary, fontSize: Typography.sm, flex: 1 },
+  featureText: { fontSize: Typography.sm, flex: 1, lineHeight: 18 },
 });
