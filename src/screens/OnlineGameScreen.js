@@ -188,7 +188,7 @@ export default function OnlineGameScreen({ route, navigation }) {
     setSubmitted(true);
     setInputEnabled(false);
     submitBall(n);
-  }, [inputEnabled, submitted]);
+  }, [inputEnabled, submitted, submitBall]);
 
   const handleStartSecondInnings = () => {
     startSecondInnings();
@@ -385,7 +385,7 @@ function TeamScoreBlock({ team, color }) {
         Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 200 }),
       ]).start();
     }
-  }, [team.totalScore]);
+  }, [team.totalScore, scaleAnim]);
 
   return (
     <View style={[styles.teamScoreBlock, { borderColor: color + '33' }]}>
