@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar,
   TextInput, Animated, KeyboardAvoidingView, Platform,
@@ -19,14 +19,14 @@ export default function JoinGameScreen({ navigation }) {
   const shakeAnim = useRef(new Animated.Value(0)).current;
   const { joinGame, subscribe } = useLobby();
 
-  const shake = () => {
+  const shake = useCallback(() => {
     Animated.sequence([
       Animated.timing(shakeAnim, { toValue: 10, duration: 80, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: -10, duration: 80, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 10, duration: 80, useNativeDriver: true }),
       Animated.timing(shakeAnim, { toValue: 0, duration: 80, useNativeDriver: true }),
     ]).start();
-  };
+  }, [shakeAnim]);
 
   useEffect(() => {
     SocketClient.connect();
@@ -40,7 +40,7 @@ export default function JoinGameScreen({ navigation }) {
       shake();
     });
     return () => { unsubJoined(); unsubError(); };
-  }, [navigation, subscribe]);
+  }, [navigation, subscribe, shake]);
 
   const handleJoin = () => {
     if (!playerName.trim()) { setError('Enter your name'); shake(); return; }

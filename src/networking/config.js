@@ -1,18 +1,33 @@
 /**
  * Server configuration.
- * Change SERVER_IP to your machine's local IP when testing on a physical device.
- * Use 'localhost' for web/emulator.
+ * Supports dynamic configuration via SettingsScreen or custom server hosting.
  */
 
 import { Platform } from 'react-native';
 
-// For physical devices, replace with your computer's LAN IP (e.g. '192.168.1.5')
-const LAN_IP = '10.158.104.23';
+const DEFAULT_LAN_IP = '10.158.104.23';
+let runtimeServerUrl = null;
 
-export const SERVER_URL =
-  Platform.OS === 'web'
+export function setCustomServerUrl(url) {
+  if (url && typeof url === 'string') {
+    let cleaned = url.trim();
+    if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+      cleaned = `http://${cleaned}`;
+    }
+    runtimeServerUrl = cleaned;
+  } else {
+    runtimeServerUrl = null;
+  }
+}
+
+export function getServerUrl() {
+  if (runtimeServerUrl) return runtimeServerUrl;
+  return Platform.OS === 'web'
     ? 'http://localhost:3001'
-    : `http://${LAN_IP}:3001`;
+    : `http://${DEFAULT_LAN_IP}:3001`;
+}
+
+export const SERVER_URL = getServerUrl();
 
 export const SOCKET_EVENTS = {
   // Outbound (client → server)

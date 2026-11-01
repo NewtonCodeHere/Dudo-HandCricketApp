@@ -3,7 +3,7 @@
  * Manages a complete offline game between a player and bot.
  */
 
-import { resolveBall, getBotNumber, calculateTarget, hasChaserWon, determineWinner } from './gameRules';
+import { resolveBall, getBotNumber, calculateTarget, hasChaserWon } from './gameRules';
 
 export const GAME_PHASE = {
   SETUP: 'SETUP',

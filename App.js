@@ -1,4 +1,6 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { ThemeProvider } from './src/theme/ThemeContext';
@@ -24,25 +26,33 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
-          initialRouteName="Home"
-        >
-          <Stack.Screen name="Home" component={HomeScreen} />
-          <Stack.Screen name="HowToPlay" component={HowToPlayScreen} />
-          <Stack.Screen name="Settings" component={SettingsScreen} />
-          <Stack.Screen name="OfflineSetup" component={OfflineSetupScreen} />
-          <Stack.Screen name="OfflineGame" component={OfflineGameScreen} />
-          <Stack.Screen name="OnlineSetup" component={OnlineSetupScreen} />
-          <Stack.Screen name="CreateGame" component={CreateGameScreen} />
-          <Stack.Screen name="JoinGame" component={JoinGameScreen} />
-          <Stack.Screen name="Lobby" component={LobbyScreen} />
-          <Stack.Screen name="OnlineGame" component={OnlineGameScreen} />
-          <Stack.Screen name="OnlineGameOver" component={OnlineGameOverScreen} />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </ThemeProvider>
+    <GestureHandlerRootView style={styles.root}>
+      <ThemeProvider>
+        <NavigationContainer>
+          <Stack.Navigator
+            screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+            initialRouteName="Home"
+          >
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="HowToPlay" component={HowToPlayScreen} />
+            <Stack.Screen name="Settings" component={SettingsScreen} />
+            <Stack.Screen name="OfflineSetup" component={OfflineSetupScreen} />
+            <Stack.Screen name="OfflineGame" component={OfflineGameScreen} />
+            <Stack.Screen name="OnlineSetup" component={OnlineSetupScreen} />
+            <Stack.Screen name="CreateGame" component={CreateGameScreen} />
+            <Stack.Screen name="JoinGame" component={JoinGameScreen} />
+            <Stack.Screen name="Lobby" component={LobbyScreen} />
+            <Stack.Screen name="OnlineGame" component={OnlineGameScreen} />
+            <Stack.Screen name="OnlineGameOver" component={OnlineGameOverScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});

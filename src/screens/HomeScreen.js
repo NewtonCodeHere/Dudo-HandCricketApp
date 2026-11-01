@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius } from '../theme/tokens';
-import { useColors, useTheme, ThemeToggle } from '../theme/ThemeContext';
+import { useColors, ThemeToggle } from '../theme/ThemeContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -45,7 +45,6 @@ function AnimatedParticle({ delay, x, size, color }) {
 
 export default function HomeScreen({ navigation }) {
   const Colors = useColors();
-  const { isDark } = useTheme();
   const titleAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const logoAnim = useRef(new Animated.Value(0)).current;

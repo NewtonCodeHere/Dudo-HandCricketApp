@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import * as SocketClient from './socket';
 import { SOCKET_EVENTS } from './config';
 

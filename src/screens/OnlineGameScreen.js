@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  StatusBar, Animated, Modal, FlatList,
+  StatusBar, Animated, Modal,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors, Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
-import { useColors, useTheme } from '../theme/ThemeContext';
+import { Colors, Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { useColors } from '../theme/ThemeContext';
 import FingerButton from '../components/FingerButton';
 import BallResult from '../components/BallResult';
 import BallHistory from '../components/BallHistory';
@@ -20,7 +20,7 @@ import { FINGER_NUMBERS } from '../game/gameRules';
 export default function OnlineGameScreen({ route, navigation }) {
   const { game: initialGame, matches: initialMatches, myPlayerId, isHost } = route.params;
   const Colors = useColors();
-  const { isDark } = useTheme();
+
   const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 
   const [game, setGame] = useState(initialGame);
@@ -45,7 +45,7 @@ export default function OnlineGameScreen({ route, navigation }) {
   const [disconnectNotice, setDisconnectNotice] = useState(null);
 
   const resultTimer = useRef(null);
-  const { submitBall, startSecondInnings, getSpectatorView, subscribe } = useGameplay();
+  const { submitBall, startSecondInnings, subscribe } = useGameplay();
 
   // Find my active match
   const myMatch = matches.find(
@@ -54,13 +54,13 @@ export default function OnlineGameScreen({ route, navigation }) {
       (m.battingPlayerId === myPlayerId || m.bowlingPlayerId === myPlayerId),
   );
   const amBatting = myMatch?.battingPlayerId === myPlayerId;
-  const amBowling = myMatch?.bowlingPlayerId === myPlayerId;
-  const myStatus = game.players[myPlayerId]?.status;
-  const amOut = myStatus === 'OUT' || myStatus === 'SPECTATING';
+
+
+
 
   // Determine which team is batting/bowling
-  const team0 = game.teams[0];
-  const team1 = game.teams[1];
+
+
   const team0Color = TEAM_COLORS[0];
   const team1Color = TEAM_COLORS[1];
 
@@ -75,7 +75,7 @@ export default function OnlineGameScreen({ route, navigation }) {
       setOpponentSubmitted(true);
     });
 
-    const unsubBallResolved = subscribe(SOCKET_EVENTS.BALL_RESOLVED, ({ matchId, ball, result, game: g }) => {
+    const unsubBallResolved = subscribe(SOCKET_EVENTS.BALL_RESOLVED, ({ matchId, ball, result: _result, game: g }) => {
       setGame(g);
       setMatches(g.matches);
 
@@ -113,7 +113,7 @@ export default function OnlineGameScreen({ route, navigation }) {
       }
     });
 
-    const unsubMatchFinished = subscribe(SOCKET_EVENTS.MATCH_FINISHED, ({ matchId, game: g }) => {
+    const unsubMatchFinished = subscribe(SOCKET_EVENTS.MATCH_FINISHED, ({ matchId: _matchId, game: g }) => {
       setGame(g);
       setMatches(g.matches);
       if (g.players[myPlayerId]) {
@@ -132,7 +132,7 @@ export default function OnlineGameScreen({ route, navigation }) {
       setShowInningsBreak(true);
     });
 
-    const unsubSecondInnings = subscribe(SOCKET_EVENTS.SECOND_INNINGS_STARTED, ({ game: g, matches: m }) => {
+    const unsubSecondInnings = subscribe(SOCKET_EVENTS.SECOND_INNINGS_STARTED, ({ game: g, matches: _m }) => {
       setGame(g);
       setMatches(g.matches);
       setShowInningsBreak(false);
@@ -175,7 +175,7 @@ export default function OnlineGameScreen({ route, navigation }) {
       unsubGameOver(); unsubDisconnect(); unsubReconnect();
       if (resultTimer.current) clearTimeout(resultTimer.current);
     };
-  }, [myPlayerId]);
+  }, [myPlayerId, navigation, subscribe]);
 
   const onCountdownComplete = useCallback(() => {
     setShowCountdown(false);
@@ -348,13 +348,15 @@ export default function OnlineGameScreen({ route, navigation }) {
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
 function TeamScoreboard({ game, team0Color, team1Color }) {
-  const team0 = game.teams[0];
-  const team1 = game.teams[1];
-  const runsNeeded = game.target ? game.target - team1.totalScore : null;
+
+
+  const t0 = game.teams[0];
+  const t1 = game.teams[1];
+  const runsNeeded = game.target ? game.target - t1.totalScore : null;
 
   return (
     <View style={styles.scoreboard}>
-      <TeamScoreBlock team={team0} color={team0Color} />
+      <TeamScoreBlock team={t0} color={team0Color} />
       <View style={styles.scoreboardDivider}>
         {game.target ? (
           <View style={styles.targetBlock}>
@@ -366,7 +368,7 @@ function TeamScoreboard({ game, team0Color, team1Color }) {
           </View>
         ) : <Text style={styles.vsText}>VS</Text>}
       </View>
-      <TeamScoreBlock team={team1} color={team1Color} />
+      <TeamScoreBlock team={t1} color={team1Color} />
     </View>
   );
 }

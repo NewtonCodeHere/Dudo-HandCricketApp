@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
-import { useColors, useTheme } from '../theme/ThemeContext';
+import { useColors } from '../theme/ThemeContext';
 import FingerButton from '../components/FingerButton';
 import ScoreBoard from '../components/ScoreBoard';
 import BallResult from '../components/BallResult';
@@ -32,7 +32,6 @@ const RESULT_DISPLAY_MS = 1800;
 
 export default function OfflineGameScreen({ route, navigation }) {
   const Colors = useColors();
-  const { isDark } = useTheme();
   const { difficulty = 'medium', playerBatsFirst = true } = route.params || {};
 
   const [gameState, setGameState] = useState(() =>
@@ -259,7 +258,6 @@ export default function OfflineGameScreen({ route, navigation }) {
             onPlayAgain={handlePlayAgain}
             onHome={handleGoHome}
             Colors={Colors}
-            isDark={isDark}
           />
         )}
       </ScrollView>
@@ -272,7 +270,6 @@ export default function OfflineGameScreen({ route, navigation }) {
         target={gameState.target}
         onContinue={handleInningsBreakContinue}
         Colors={Colors}
-        isDark={isDark}
       />
     </View>
   );
@@ -286,7 +283,6 @@ function GameOverCard({
   onPlayAgain,
   onHome,
   Colors,
-  isDark,
 }) {
   const scaleAnim = useRef(new Animated.Value(0.85)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;

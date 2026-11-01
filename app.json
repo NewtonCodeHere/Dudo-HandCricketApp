@@ -2,6 +2,7 @@
   "expo": {
     "name": "DUDO Hand Cricket",
     "slug": "dudo-handcricket-app",
+    "owner": "newtoncodes-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,12 +12,14 @@
     },
     "android": {
       "package": "com.dudo.handcricketapp",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#FF5A5F",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+      },
+      "permissions": []
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -25,6 +28,9 @@
       "eas": {
         "projectId": "7748c16d-6ede-465f-ae2a-318b5ef6b720"
       }
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { SERVER_URL } from './config';
+import { getServerUrl } from './config';
 
 let socket = null;
 let listeners = new Map(); // event -> Set of callbacks
@@ -10,7 +10,7 @@ let listeners = new Map(); // event -> Set of callbacks
 export function connect() {
   if (socket && socket.connected) return socket;
 
-  socket = io(SERVER_URL, {
+  socket = io(getServerUrl(), {
     transports: ['websocket'],
     reconnection: true,
     reconnectionAttempts: 5,

@@ -37,7 +37,7 @@ export function resolveBall(batNumber, bowlNumber) {
  * @param {number} currentBatScore - current batsman score (for adaptive bot)
  * @param {number[]} history - history of batsman choices
  */
-export function getBotNumber(difficulty = 'medium', currentBatScore = 0, history = []) {
+export function getBotNumber(difficulty = 'medium', _currentBatScore = 0, history = []) {
   switch (difficulty) {
     case 'easy':
       // Bot picks randomly, low intelligence

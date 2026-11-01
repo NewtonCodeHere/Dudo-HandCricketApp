@@ -5,12 +5,11 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
-import { useColors, useTheme } from '../theme/ThemeContext';
+import { useColors } from '../theme/ThemeContext';
 
 export default function OnlineGameOverScreen({ route, navigation }) {
   const { game, winnerTeamId, myPlayerId } = route.params;
   const Colors = useColors();
-  const { isDark } = useTheme();
 
   const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 

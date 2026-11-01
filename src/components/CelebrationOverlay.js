@@ -9,7 +9,7 @@
  */
 
 import React, { useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions } from 'react-native';
+import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 
 const { width: W, height: H } = Dimensions.get('window');
 
@@ -48,27 +48,27 @@ const CONFIGS = {
   },
   9: {
     label: '🌈 NINE!',
-    labelColor: '#00CFFF',
-    glowColor: '#00CFFF',
-    count: 40,
-    emojis: ['🌈', '🦋', '🎨', '💜', '💚', '💛', '🧡'],
+    labelColor: '#00FA9A',
+    glowColor: '#00FA9A',
+    count: 32,
+    emojis: ['🌈', '✨', '⭐', '🎈', '🎉'],
     origin: 'sides',
     pattern: 'cascade',
-    duration: 2400,
+    duration: 2200,
   },
   10: {
-    label: '🏆 TEN!!',
-    labelColor: '#FFD700',
+    label: '🎊 PERFECT 10!',
+    labelColor: '#FF1493',
     glowColor: '#FFD700',
-    count: 55,
-    emojis: ['🎊', '🎉', '🏆', '🔥', '💥', '🌸', '⭐', '🎆', '👑', '🌈'],
+    count: 45,
+    emojis: ['🎊', '🎉', '🔥', '👑', '💯', '🌸', '⭐', '🚀'],
     origin: 'all',
     pattern: 'mega',
-    duration: 3000,
+    duration: 2600,
   },
 };
 
-// ─── Single particle ──────────────────────────────────────────────────────────
+// ─── Single Particle ──────────────────────────────────────────────────────────
 
 function Particle({ emoji, startX, startY, angle, speed, duration, delay, size }) {
   const x = useRef(new Animated.Value(startX)).current;
@@ -98,7 +98,7 @@ function Particle({ emoji, startX, startY, angle, speed, duration, delay, size }
     ]);
     anim.start();
     return () => anim.stop();
-  }, []);
+  }, [delay, duration, endX, endY, opacity, rotate, scale, x, y]);
 
   const rotateDeg = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '720deg'] });
 
@@ -134,7 +134,7 @@ function CelebrationLabel({ label, color }) {
         Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]),
     ]).start();
-  }, []);
+  }, [opacity, scale]);
 
   return (
     <Animated.Text
@@ -161,7 +161,7 @@ export default function CelebrationOverlay({ runs, visible, onComplete }) {
   const particles = useMemo(() => {
     if (!config) return [];
     const list = [];
-    const { count, emojis, origin, pattern, duration } = config;
+    const { count, emojis, pattern, duration } = config;
 
     for (let i = 0; i < count; i++) {
       const emoji = emojis[i % emojis.length];
@@ -218,13 +218,13 @@ export default function CelebrationOverlay({ runs, visible, onComplete }) {
       list.push({ id: i, emoji, startX, startY, angle, speed, duration, delay, size });
     }
     return list;
-  }, [runs]);
+  }, [config]);
 
   useEffect(() => {
     if (!visible || !config) return;
     const timer = setTimeout(onComplete, config.duration + 500);
     return () => clearTimeout(timer);
-  }, [visible, runs]);
+  }, [visible, config, onComplete]);
 
   if (!visible || !config) return null;
 
