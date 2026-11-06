@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 const BUBBLE_SOUND = require('../../assets/sounds/bubble_pop.wav');
 const CHEER_SOUND = require('../../assets/sounds/cheer.mp3');
 const WICKET_SOUND = require('../../assets/sounds/wicket_out.wav');
+const BAT_HIT_SOUND = require('../../assets/sounds/bat_hit.wav');
 const BGM_SOUND = require('../../assets/sounds/bgm_loop.wav');
 
 let ExpoAudio = null;
@@ -113,6 +114,10 @@ class SoundService {
     this.playAudioSource(BUBBLE_SOUND, 0.75);
   }
 
+  async playBatHit() {
+    this.playAudioSource(BAT_HIT_SOUND, 0.95);
+  }
+
   async playCheer(force = false) {
     if (!force && (!this.sfxEnabled || !this.cheerEnabled)) return;
     this.playAudioSource(CHEER_SOUND, 0.9, force);
@@ -182,8 +187,8 @@ class SoundService {
 
   getSpeechVoiceOptions() {
     const isFemale = this.voiceGender === 'female';
-    const pitch = isFemale ? 1.15 : 0.85;
-    const rate = isFemale ? 1.0 : 0.92;
+    const pitch = isFemale ? 1.15 : 0.88;
+    const rate = isFemale ? 1.05 : 0.98;
 
     const options = { pitch, rate };
 
@@ -205,6 +210,14 @@ class SoundService {
     return options;
   }
 
+  stopSpeech() {
+    try {
+      Speech.stop();
+    } catch {
+      // Ignore
+    }
+  }
+
   speakText(text) {
     if (!this.commentaryEnabled) return;
     try {
@@ -218,19 +231,23 @@ class SoundService {
 
   /**
    * Announce ball score or outcome:
-   * 1-5: commentary within waiting time.
-   * 6-10: announce the score value + trigger crowd cheer sound effect (if cheerEnabled).
-   * Out: announce wicket + play wicket sound.
+   * Synced directly to the ball bowled and struck.
+   * Score stated ONLY ONE TIME with snappy cricket commentary.
+   * 6-10: triggers crowd cheer sound effect (if cheerEnabled).
+   * Out: triggers wicket crash sound + wicket call.
    */
   announceBallResult(runs, isOut, isPlayerBatting = true) {
     if (isOut) {
       this.playWicket();
       const outText = isPlayerBatting
-        ? 'OUT! What a delivery! The batsman is caught!'
-        : 'WICKET! You got him! He is OUT!';
+        ? 'OUT! The batsman is caught!'
+        : 'WICKET! You got him OUT!';
       this.speakText(outText);
       return;
     }
+
+    // Play crisp bat hit sound in sync with the ball being bowled and struck
+    this.playBatHit();
 
     if (runs >= 6) {
       if (this.cheerEnabled) {
@@ -238,29 +255,30 @@ class SoundService {
       }
 
       const bigPhrases = {
-        6: 'SIX! Six, six! Massive hit over deep mid-wicket!',
-        7: 'SEVEN! Seven runs! Incredible shot into the upper tier!',
-        8: 'EIGHT! Eight runs! What an unbelievable monster hit!',
-        9: 'NINE! Nine runs! Colossal strike clean out of the ground!',
-        10: 'PERFECT TEN! Ten runs! Absolute perfection! Out of the stadium!',
+        6: 'SIX! Massive hit over deep mid-wicket!',
+        7: 'Seven runs! Incredible shot into the upper tier!',
+        8: 'Eight runs! What a monster hit!',
+        9: 'Nine runs! Colossal strike out of the ground!',
+        10: 'PERFECT TEN! Absolute perfection!',
       };
 
-      const announcement = bigPhrases[runs] || `${runs}! Enormous hit!`;
+      const announcement = bigPhrases[runs] || `${runs} runs! Enormous hit!`;
       this.speakText(announcement);
       return;
     }
 
     if (this.commentaryEnabled) {
+      // Say the score ONLY ONE TIME
       const commentaryPhrases = {
-        1: 'One, one, one! Quick single taken.',
-        2: 'Two, two, two! Great running between the wickets.',
-        3: 'Three, three, three! Superb placement in the gap.',
-        4: 'Four, four, four! Pierces the field right to the fence!',
-        5: 'Five, five, five! Five runs on the board!',
+        1: 'One run! Quick single taken.',
+        2: 'Two runs! Good running.',
+        3: 'Three runs! Superb placement.',
+        4: 'Four! Pierces the field to the boundary!',
+        5: 'Five runs on the board!',
       };
-      this.speakText(commentaryPhrases[runs] || `${runs}, ${runs}, ${runs}!`);
+      this.speakText(commentaryPhrases[runs] || `${runs} runs!`);
     } else if (this.sfxEnabled) {
-      const scoreWords = { 1: 'One', 2: 'Two', 3: 'Three', 4: 'Four', 5: 'Five' };
+      const scoreWords = { 1: 'One run', 2: 'Two runs', 3: 'Three runs', 4: 'Four', 5: 'Five' };
       this.speakText(scoreWords[runs] || String(runs));
     }
   }

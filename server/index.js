@@ -2,21 +2,46 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const { registerSocketHandlers } = require('./socket/socketHandlers');
+const config = require('./config');
+const { initRedis, getSocketAdapter } = require('./redis/redisClient');
+const { socketAuthMiddleware } = require('./socket/socketAuthMiddleware');
+const { helmetMiddleware, apiLimiter } = require('./middleware/security');
+const authRoutes = require('./routes/authRoutes');
+const { registerSocketHandlers, gameManager } = require('./socket/socketHandlers');
 
-const PORT = process.env.PORT || 3001;
+const PORT = config.port || process.env.PORT || 3001;
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+// Enterprise Security & Rate Limiting Middlewares
+app.use(helmetMiddleware);
+app.use(cors({ origin: config.corsOrigins }));
+app.use(express.json({ limit: '10kb' }));
+app.use(apiLimiter);
+
+// Mount Authentication & Player REST endpoints
+app.use('/api', authRoutes);
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*', methods: ['GET', 'POST'] },
+  cors: { origin: config.corsOrigins, methods: ['GET', 'POST'] },
   transports: ['websocket', 'polling'],
   pingTimeout: 10000,
   pingInterval: 5000,
 });
+
+// Multi-Node Redis Scaling for high-traffic environments
+const redis = initRedis();
+if (redis) {
+  const adapter = getSocketAdapter();
+  if (adapter) {
+    io.adapter(adapter);
+    console.log('[Socket.IO] Multi-node Redis adapter connected & active');
+  }
+}
+
+// Enterprise Handshake Authentication (Token validation / Guest auto-provisioning)
+io.use(socketAuthMiddleware);
 
 // Register all Socket.IO handlers
 registerSocketHandlers(io);
@@ -279,9 +304,31 @@ app.get('/', (req, res) => {
   `);
 });
 
-// Health check JSON
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Comprehensive Health & Telemetry endpoint
+app.get(['/health', '/api/health'], (req, res) => {
+  const activeGames = gameManager ? gameManager.games.size : 0;
+  const activePlayers = gameManager ? gameManager.playerToGame.size : 0;
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.floor(process.uptime()),
+    environment: config.nodeEnv,
+    metrics: {
+      activeGames,
+      activePlayers,
+      connectedSockets: io.sockets.sockets ? io.sockets.sockets.size : 0,
+    },
+    cluster: {
+      pid: process.pid,
+      isWorker: require('cluster').isWorker,
+    },
+    scaling: {
+      redis: redis ? 'active' : 'in-memory-fallback',
+      kafka: config.kafkaBrokers ? 'active' : 'async-event-bus',
+      rateLimiter: 'active',
+      securityHeaders: 'helmet-active',
+    },
+  });
 });
 
 server.listen(PORT, '0.0.0.0', () => {

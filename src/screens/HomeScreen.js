@@ -114,8 +114,6 @@ export default function HomeScreen({ navigation }) {
           style={[
             styles.logoCard,
             {
-              backgroundColor: Colors.backgroundCard,
-              borderColor: Colors.borderLight,
               shadowColor: Colors.shadow,
               transform: [{ scale: logoScale }],
             },
@@ -279,22 +277,19 @@ const styles = StyleSheet.create({
     marginTop: -15,
   },
   logoCard: {
-    width: 105,
-    height: 105,
-    borderRadius: 28,
-    borderWidth: 1.5,
+    width: 100,
+    height: 100,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.md,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 18,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
     elevation: 8,
-    overflow: 'hidden',
   },
   logoImage: {
-    width: 95,
-    height: 95,
+    width: 100,
+    height: 100,
   },
   titleBrand: {
     fontSize: Typography.sm,

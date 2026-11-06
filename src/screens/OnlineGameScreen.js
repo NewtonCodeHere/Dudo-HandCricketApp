@@ -22,7 +22,7 @@ import { FINGER_NUMBERS } from '../game/gameRules';
 export default function OnlineGameScreen({ route, navigation }) {
   const { game: initialGame, matches: initialMatches, myPlayerId, isHost } = route.params;
   const Colors = useColors();
-  const { announceBallResult, playBubblePop } = useAudio();
+  const { announceBallResult, playBubblePop, stopSpeech } = useAudio();
 
   const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 
@@ -95,6 +95,7 @@ export default function OnlineGameScreen({ route, navigation }) {
         resultTimer.current = setTimeout(() => {
           setShowResult(false);
           setLastBall(null);
+          stopSpeech();
           // Re-enable input for next ball if still active
           const updatedMatch = g.matches.find((m) => m.matchId === matchId);
           if (updatedMatch?.status === 'ACTIVE') {
@@ -178,13 +179,15 @@ export default function OnlineGameScreen({ route, navigation }) {
       unsubMatchFinished(); unsubInningsBreak(); unsubSecondInnings();
       unsubGameOver(); unsubDisconnect(); unsubReconnect();
       if (resultTimer.current) clearTimeout(resultTimer.current);
+      stopSpeech();
     };
-  }, [myPlayerId, navigation, subscribe, announceBallResult]);
+  }, [myPlayerId, navigation, subscribe, announceBallResult, stopSpeech]);
 
   const onCountdownComplete = useCallback(() => {
+    stopSpeech();
     setShowCountdown(false);
     setInputEnabled(true);
-  }, []);
+  }, [stopSpeech]);
 
   const handleNumberSelect = useCallback((n) => {
     if (!inputEnabled || submitted) return;

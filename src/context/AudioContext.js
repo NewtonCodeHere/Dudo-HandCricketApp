@@ -59,8 +59,16 @@ export function AudioProvider({ children }) {
     SoundManager.previewCheer();
   }, []);
 
+  const playBatHit = useCallback(() => {
+    SoundManager.playBatHit();
+  }, []);
+
   const playWicket = useCallback(() => {
     SoundManager.playWicket();
+  }, []);
+
+  const stopSpeech = useCallback(() => {
+    SoundManager.stopSpeech();
   }, []);
 
   const announceBallResult = useCallback((runs, isOut, isPlayerBatting) => {
@@ -91,9 +99,11 @@ export function AudioProvider({ children }) {
         voiceGender,
         setVoiceGender,
         playBubblePop,
+        playBatHit,
         playCheer,
         previewCheer,
         playWicket,
+        stopSpeech,
         announceBallResult,
         previewVoice,
       }}
@@ -118,9 +128,11 @@ export function useAudio() {
       voiceGender: 'female',
       setVoiceGender: () => {},
       playBubblePop: () => SoundManager.playBubblePop(),
+      playBatHit: () => SoundManager.playBatHit(),
       playCheer: (force) => SoundManager.playCheer(force),
       previewCheer: () => SoundManager.previewCheer(),
       playWicket: () => SoundManager.playWicket(),
+      stopSpeech: () => SoundManager.stopSpeech(),
       announceBallResult: (...args) => SoundManager.announceBallResult(...args),
       previewVoice: () => SoundManager.previewVoice(),
     };

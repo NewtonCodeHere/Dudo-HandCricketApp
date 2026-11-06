@@ -1,26 +1,43 @@
 import { io } from 'socket.io-client';
 import { getServerUrl } from './config';
+import { authService } from '../services/authService';
 
 let socket = null;
 let listeners = new Map(); // event -> Set of callbacks
 
 /**
- * Connect to the server.
+ * Connect to the server with session token & security authentication.
  */
 export function connect() {
   if (socket && socket.connected) return socket;
 
+  const currentToken = authService.getToken();
+  const currentUser = authService.getUser();
+
   socket = io(getServerUrl(), {
     transports: ['websocket'],
     reconnection: true,
-    reconnectionAttempts: 5,
+    reconnectionAttempts: 10,
     reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
     timeout: 10000,
+    auth: {
+      token: currentToken || undefined,
+      playerName: currentUser?.name || undefined,
+    },
   });
 
   socket.on('connect', () => {
     console.log('[Socket] Connected:', socket.id);
     emit('_internal_connected', { id: socket.id });
+  });
+
+  socket.on('AUTHENTICATED', (data) => {
+    console.log('[Socket] Authenticated session established:', data.user?.name);
+    if (data.token) {
+      authService.saveSession(data.token, data.user);
+    }
+    emit('AUTHENTICATED', data);
   });
 
   socket.on('disconnect', (reason) => {
@@ -35,7 +52,7 @@ export function connect() {
 
   // Forward all server events to local listeners
   const serverEvents = [
-    'GAME_CREATED', 'GAME_JOINED', 'TEAM_JOINED', 'LOBBY_UPDATED',
+    'AUTHENTICATED', 'GAME_CREATED', 'GAME_JOINED', 'TEAM_JOINED', 'LOBBY_UPDATED',
     'GAME_STARTED', 'BALL_SUBMITTED', 'OPPONENT_SUBMITTED', 'BALL_RESOLVED',
     'MATCH_FINISHED', 'INNINGS_BREAK', 'SECOND_INNINGS_STARTED', 'GAME_OVER',
     'SPECTATOR_VIEW', 'PLAYER_DISCONNECTED', 'PLAYER_RECONNECTED', 'RECONNECTED',

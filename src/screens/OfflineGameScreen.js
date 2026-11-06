@@ -30,11 +30,11 @@ import {
 } from '../game/offlineEngine';
 import { FINGER_NUMBERS } from '../game/gameRules';
 
-const RESULT_DISPLAY_MS = 1800;
+const RESULT_DISPLAY_MS = 2000;
 
 export default function OfflineGameScreen({ route, navigation }) {
   const Colors = useColors();
-  const { announceBallResult, playBubblePop } = useAudio();
+  const { announceBallResult, playBubblePop, stopSpeech } = useAudio();
   const { difficulty = 'medium', playerBatsFirst = true } = route.params || {};
 
   const [gameState, setGameState] = useState(() =>
@@ -54,13 +54,15 @@ export default function OfflineGameScreen({ route, navigation }) {
   useEffect(() => {
     return () => {
       if (resultTimer.current) clearTimeout(resultTimer.current);
+      stopSpeech();
     };
-  }, []);
+  }, [stopSpeech]);
 
   const onCountdownComplete = useCallback(() => {
+    stopSpeech();
     setShowCountdown(false);
     setInputEnabled(true);
-  }, []);
+  }, [stopSpeech]);
 
   const handleNumberSelect = useCallback(
     (n) => {
@@ -78,6 +80,7 @@ export default function OfflineGameScreen({ route, navigation }) {
       resultTimer.current = setTimeout(() => {
         setShowResult(false);
         setSelectedNumber(null);
+        stopSpeech();
 
         if (newState.phase === GAME_PHASE.INNINGS_BREAK) {
           setGameState(newState);
@@ -106,7 +109,7 @@ export default function OfflineGameScreen({ route, navigation }) {
         setCelebrationRuns(newState.lastBall.runs);
       }
     },
-    [inputEnabled, gameState, announceBallResult],
+    [inputEnabled, gameState, announceBallResult, stopSpeech],
   );
 
   const handleInningsBreakContinue = () => {
