@@ -507,6 +507,137 @@ export default function SettingsScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Account & Cloud Security Section */}
+        <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>ACCOUNT & CLOUD SECURITY</Text>
+        <Text style={[styles.sectionDesc, { color: Colors.textSecondary }]}>
+          Secure your game progress, save stats to Google Play, and sync cross-device.
+        </Text>
+
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: Colors.backgroundCard,
+              borderColor: Colors.border,
+              shadowColor: Colors.shadow,
+            },
+          ]}
+        >
+          {/* Identity Row */}
+          <View style={[styles.row, { borderBottomColor: Colors.border }]}>
+            <View style={styles.rowLeft}>
+              <Text style={styles.rowIcon}>
+                {authState.user?.isGoogleLinked || authState.user?.googleId ? '🏆' : '👤'}
+              </Text>
+              <View>
+                <Text style={[styles.rowLabel, { color: Colors.textPrimary }]}>
+                  {authState.user?.name || 'Guest Player'}
+                </Text>
+                <Text style={[styles.rowSub, { color: Colors.textMuted }]}>
+                  ID: {(authState.user?.playerId || 'local').slice(0, 14)}...
+                </Text>
+              </View>
+            </View>
+            <View
+              style={[
+                styles.statusBadge,
+                {
+                  backgroundColor:
+                    authState.user?.isGoogleLinked || authState.user?.googleId
+                      ? 'rgba(46, 213, 115, 0.15)'
+                      : 'rgba(255, 171, 0, 0.15)',
+                  borderColor:
+                    authState.user?.isGoogleLinked || authState.user?.googleId
+                      ? '#2ED573'
+                      : '#FFAB00',
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.statusBadgeText,
+                  {
+                    color:
+                      authState.user?.isGoogleLinked || authState.user?.googleId
+                        ? '#2ED573'
+                        : '#FFAB00',
+                  },
+                ]}
+              >
+                {authState.user?.isGoogleLinked || authState.user?.googleId
+                  ? 'GOOGLE PLAY LINKED'
+                  : 'GUEST PROFILE'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Google Play Account Link Action */}
+          <View style={{ padding: Spacing.lg }}>
+            {authState.user?.isGoogleLinked || authState.user?.googleId ? (
+              <View style={styles.linkedBox}>
+                <Text style={styles.linkedIcon}>✓</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.linkedTitle, { color: Colors.textPrimary }]}>
+                    Account Protected with Google Play
+                  </Text>
+                  <Text style={[styles.linkedSub, { color: Colors.textSecondary }]}>
+                    Cloud save active: Your match history and high scores are preserved.
+                  </Text>
+                </View>
+              </View>
+            ) : (
+              <View>
+                <Text style={[styles.linkNotice, { color: Colors.textSecondary }]}>
+                  You are currently playing with a local guest profile. Link your Google Play account to
+                  safeguard your match records and compete on global leaderboards.
+                </Text>
+                <TouchableOpacity
+                  onPress={handleLinkGooglePlay}
+                  disabled={isLinking}
+                  style={[styles.linkGoogleBtn, { backgroundColor: Colors.primary }]}
+                  activeOpacity={0.8}
+                >
+                  {isLinking ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.googleIconText}>🎮</Text>
+                      <Text style={styles.linkGoogleBtnText}>Link Google Play Account</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {linkStatusMsg ? (
+              <Text
+                style={[
+                  styles.linkStatusText,
+                  { color: linkStatusMsg.includes('success') ? '#2ED573' : Colors.accent },
+                ]}
+              >
+                {linkStatusMsg}
+              </Text>
+            ) : null}
+
+            {/* Security Guarantee Badges */}
+            <View style={[styles.secBadgeRow, { borderTopColor: Colors.border, borderTopWidth: 1 }]}>
+              <View style={styles.secItem}>
+                <Text style={styles.secIcon}>🔒</Text>
+                <Text style={[styles.secText, { color: Colors.textMuted }]}>
+                  Hardware Token Encryption (Expo SecureStore)
+                </Text>
+              </View>
+              <View style={styles.secItem}>
+                <Text style={styles.secIcon}>⚡</Text>
+                <Text style={[styles.secText, { color: Colors.textMuted }]}>
+                  High-Capacity Redis Distributed Network
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
         {/* About Brand */}
         <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>ABOUT DUDO</Text>
         <View
@@ -790,4 +921,89 @@ const styles = StyleSheet.create({
   aboutTitle: { fontSize: Typography.md, fontWeight: '700' },
   aboutSub: { fontSize: Typography.xs, marginTop: 2 },
   aboutDesc: { fontSize: Typography.sm, lineHeight: 20, padding: Spacing.lg, paddingTop: 0 },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  linkedBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    backgroundColor: 'rgba(46, 213, 115, 0.08)',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(46, 213, 115, 0.3)',
+  },
+  linkedIcon: {
+    fontSize: 20,
+    color: '#2ED573',
+    fontWeight: '900',
+  },
+  linkedTitle: {
+    fontSize: Typography.sm,
+    fontWeight: '700',
+  },
+  linkedSub: {
+    fontSize: Typography.xs,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  linkNotice: {
+    fontSize: Typography.xs,
+    lineHeight: 18,
+    marginBottom: Spacing.md,
+  },
+  linkGoogleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  googleIconText: {
+    fontSize: 18,
+  },
+  linkGoogleBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: Typography.sm,
+    letterSpacing: 0.5,
+  },
+  linkStatusText: {
+    fontSize: Typography.xs,
+    fontWeight: '600',
+    marginTop: Spacing.sm,
+    textAlign: 'center',
+  },
+  secBadgeRow: {
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  secItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  secIcon: {
+    fontSize: 14,
+  },
+  secText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
 });
