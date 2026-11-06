@@ -32,7 +32,7 @@ function registerSocketHandlers(io) {
 
     // ─── Lobby Events ────────────────────────────────────────────────────
 
-    socket.on('CREATE_GAME', ({ playerName, maxPlayers, teamCount }) => {
+    socket.on('CREATE_GAME', ({ playerName, maxPlayers, teamCount, overs }) => {
       if (!checkSocketRateLimit(socket, 'CREATE_GAME')) {
         socket.emit('ERROR', { message: 'Action rate limit exceeded. Please wait a moment.' });
         return;
@@ -41,12 +41,16 @@ function registerSocketHandlers(io) {
       const cleanName = sanitizeText(playerName || verifiedUser.name, 20);
       const playersNum = parseInt(maxPlayers, 10);
       const teamsNum = parseInt(teamCount, 10);
+      const oversVal = (overs !== null && overs !== undefined && overs !== 'unlimited')
+        ? Math.max(1, Math.min(50, parseInt(overs, 10) || 1))
+        : null;
 
       const result = gameManager.createGame({
         hostId: socket.id,
         hostName: cleanName || 'Host',
         maxPlayers: playersNum,
         teamCount: teamsNum,
+        overs: oversVal,
       });
 
       if (result.error) {

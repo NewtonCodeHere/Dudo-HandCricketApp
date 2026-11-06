@@ -35,7 +35,10 @@ const RESULT_DISPLAY_MS = 2000;
 export default function OfflineGameScreen({ route, navigation }) {
   const Colors = useColors();
   const { announceBallResult, playBubblePop, stopSpeech } = useAudio();
-  const { difficulty = 'medium', playerBatsFirst = true } = route.params || {};
+  const { difficulty = 'medium', playerBatsFirst = true, playerName = 'You' } = route.params || {};
+
+  const playerDisplayName = (playerName && playerName.trim()) ? playerName.trim() : 'You';
+  const playerLabelUpper = playerDisplayName.toUpperCase();
 
   const [gameState, setGameState] = useState(() =>
     createOfflineGame({ difficulty, playerBatsFirst }),
@@ -187,7 +190,7 @@ export default function OfflineGameScreen({ route, navigation }) {
 
         {/* Scoreboard */}
         <ScoreBoard
-          playerLabel="YOU"
+          playerLabel={playerLabelUpper}
           botLabel="BOT"
           playerScore={gameState.playerScore}
           botScore={gameState.botScore}
@@ -273,6 +276,7 @@ export default function OfflineGameScreen({ route, navigation }) {
             winMessage={gameState.winMessage}
             playerScore={gameState.playerScore}
             botScore={gameState.botScore}
+            playerLabel={playerLabelUpper}
             onPlayAgain={handlePlayAgain}
             onHome={handleGoHome}
             Colors={Colors}
@@ -286,6 +290,7 @@ export default function OfflineGameScreen({ route, navigation }) {
         playerBatsFirst={playerBatsFirst}
         firstInningsScore={playerBatsFirst ? gameState.playerInnings1 : gameState.botInnings1}
         target={gameState.target}
+        playerLabel={playerDisplayName}
         onContinue={handleInningsBreakContinue}
         Colors={Colors}
       />
@@ -298,6 +303,7 @@ function GameOverCard({
   winMessage,
   playerScore,
   botScore,
+  playerLabel = 'YOU',
   onPlayAgain,
   onHome,
   Colors,
@@ -336,7 +342,7 @@ function GameOverCard({
           {winMessage}
         </Text>
         <View style={styles.finalScores}>
-          <ScoreRow label="YOU" score={playerScore} highlight={isPlayerWin} Colors={Colors} />
+          <ScoreRow label={playerLabel} score={playerScore} highlight={isPlayerWin} Colors={Colors} />
           <ScoreRow
             label="BOT"
             score={botScore}
@@ -382,11 +388,12 @@ function InningsBreakModal({
   playerBatsFirst,
   firstInningsScore,
   target,
+  playerLabel = 'You',
   onContinue,
   Colors,
 }) {
   const isPlayerChasing = !playerBatsFirst;
-  const chaserLabel = isPlayerChasing ? 'YOU' : 'BOT';
+  const chaserLabel = isPlayerChasing ? playerLabel.toUpperCase() : 'BOT';
 
   return (
     <Modal visible={visible} transparent animationType="fade">
@@ -406,7 +413,7 @@ function InningsBreakModal({
             {firstInningsScore} RUNS
           </Text>
           <Text style={[styles.modalDesc, { color: Colors.textSecondary }]}>
-            {playerBatsFirst ? 'You scored' : 'Bot scored'} {firstInningsScore} runs.
+            {playerBatsFirst ? `${playerLabel} scored` : 'Bot scored'} {firstInningsScore} runs.
           </Text>
           <View
             style={[

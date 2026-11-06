@@ -71,9 +71,16 @@ export default function OnlineGameOverScreen({ route, navigation }) {
           </Text>
           {myPlayer && (
             <Text style={[styles.myScore, { color: Colors.textMuted }]}>
-              Your score: {myPlayer.score} runs
+              Your score: {myPlayer.score} runs {myPlayer.ballsPlayed ? `(${myPlayer.ballsPlayed} balls)` : ''}
             </Text>
           )}
+          <Text style={[styles.formatSub, { color: Colors.textMuted }]}>
+            {game.overs === 1
+              ? '⚡ Super Over (6 balls)'
+              : game.overs
+              ? `🏏 ${game.overs} Overs (${game.maxBalls || game.overs * 6} balls)`
+              : '♾️ Unlimited Overs'}
+          </Text>
 
           {/* Team scores */}
           <View style={styles.teamScoreCards}>
@@ -178,7 +185,8 @@ const styles = StyleSheet.create({
   winnerName: { fontSize: Typography['3xl'], fontWeight: Typography.black, letterSpacing: 2 },
   winnerLabel: { fontSize: Typography['2xl'], fontWeight: Typography.black, letterSpacing: 4, marginBottom: Spacing.sm },
   personalResult: { fontSize: Typography.md, marginBottom: Spacing.xs, fontWeight: '600' },
-  myScore: { fontSize: Typography.sm, marginBottom: Spacing.xl },
+  myScore: { fontSize: Typography.sm, marginBottom: 4 },
+  formatSub: { fontSize: Typography.xs, marginBottom: Spacing.xl, fontStyle: 'italic' },
   teamScoreCards: { flexDirection: 'row', gap: Spacing.md, width: '100%', marginBottom: Spacing.xl },
   teamScoreCard: {
     flex: 1, borderRadius: BorderRadius.xl,

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   TouchableOpacity,
   StatusBar,
@@ -18,6 +19,7 @@ export default function OfflineSetupScreen({ navigation }) {
   const { playBubblePop } = useAudio();
   const [difficulty, setDifficulty] = useState('medium');
   const [playerBatsFirst, setPlayerBatsFirst] = useState(true);
+  const [playerName, setPlayerName] = useState('');
 
   const difficultyOptions = [
     {
@@ -42,7 +44,11 @@ export default function OfflineSetupScreen({ navigation }) {
 
   const startGame = () => {
     playBubblePop();
-    navigation.navigate('OfflineGame', { difficulty, playerBatsFirst });
+    navigation.navigate('OfflineGame', {
+      difficulty,
+      playerBatsFirst,
+      playerName: playerName.trim() || 'You',
+    });
   };
 
   return (
@@ -116,6 +122,27 @@ export default function OfflineSetupScreen({ navigation }) {
               </Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* Player Name */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>PLAYER NAME</Text>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                backgroundColor: Colors.backgroundCard,
+                color: Colors.textPrimary,
+                borderColor: Colors.border,
+              },
+            ]}
+            placeholder="Enter player name (e.g. You, Champion)..."
+            placeholderTextColor={Colors.inputPlaceholder}
+            value={playerName}
+            onChangeText={setPlayerName}
+            maxLength={16}
+            autoCapitalize="words"
+          />
         </View>
 
         {/* Difficulty */}
@@ -217,6 +244,13 @@ const styles = StyleSheet.create({
     fontWeight: Typography.bold,
     letterSpacing: 2,
     marginBottom: Spacing.md,
+  },
+  input: {
+    borderRadius: BorderRadius.xl,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    fontSize: Typography.base,
+    borderWidth: 1.5,
   },
   toggleRow: {
     flexDirection: 'row',

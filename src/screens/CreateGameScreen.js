@@ -15,12 +15,20 @@ import * as SocketClient from '../networking/socket';
 const PLAYER_OPTIONS = [2, 4, 6, 8, 10, 12];
 const TEAM_OPTIONS = [2, 3, 4];
 
+const OVERS_MODES = {
+  SUPER_OVER: 'SUPER_OVER',
+  UNLIMITED: 'UNLIMITED',
+  CUSTOM: 'CUSTOM',
+};
+
 export default function CreateGameScreen({ navigation }) {
   const Colors = useColors();
   const { playBubblePop } = useAudio();
   const [playerName, setPlayerName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(6);
   const [teamCount, setTeamCount] = useState(2);
+  const [oversMode, setOversMode] = useState(OVERS_MODES.SUPER_OVER);
+  const [customOvers, setCustomOvers] = useState(2);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const { createGame, subscribe } = useLobby();
@@ -47,7 +55,15 @@ export default function CreateGameScreen({ navigation }) {
     if (!isValidCombo) { setError('Invalid player/team division'); return; }
     setError('');
     setLoading(true);
-    createGame(playerName.trim(), maxPlayers, teamCount);
+
+    const effectiveOvers =
+      oversMode === OVERS_MODES.SUPER_OVER
+        ? 1
+        : oversMode === OVERS_MODES.UNLIMITED
+        ? null
+        : Math.max(1, Math.min(50, parseInt(customOvers, 10) || 2));
+
+    createGame(playerName.trim(), maxPlayers, teamCount, effectiveOvers);
   };
 
   return (
@@ -117,6 +133,137 @@ export default function CreateGameScreen({ navigation }) {
           </View>
         </View>
 
+        {/* Number of Overs */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>NUMBER OF OVERS</Text>
+          <View style={styles.optionRow}>
+            <TouchableOpacity
+              onPress={() => {
+                playBubblePop();
+                setOversMode(OVERS_MODES.SUPER_OVER);
+              }}
+              style={[
+                styles.oversChip,
+                {
+                  backgroundColor: oversMode === OVERS_MODES.SUPER_OVER ? Colors.primaryTint : Colors.backgroundCard,
+                  borderColor: oversMode === OVERS_MODES.SUPER_OVER ? Colors.primary : Colors.border,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.oversChipText, { color: oversMode === OVERS_MODES.SUPER_OVER ? Colors.primary : Colors.textSecondary }]}>
+                ⚡ Super Over
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                playBubblePop();
+                setOversMode(OVERS_MODES.UNLIMITED);
+              }}
+              style={[
+                styles.oversChip,
+                {
+                  backgroundColor: oversMode === OVERS_MODES.UNLIMITED ? Colors.primaryTint : Colors.backgroundCard,
+                  borderColor: oversMode === OVERS_MODES.UNLIMITED ? Colors.primary : Colors.border,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.oversChipText, { color: oversMode === OVERS_MODES.UNLIMITED ? Colors.primary : Colors.textSecondary }]}>
+                ♾️ Unlimited
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                playBubblePop();
+                setOversMode(OVERS_MODES.CUSTOM);
+              }}
+              style={[
+                styles.oversChip,
+                {
+                  backgroundColor: oversMode === OVERS_MODES.CUSTOM ? Colors.primaryTint : Colors.backgroundCard,
+                  borderColor: oversMode === OVERS_MODES.CUSTOM ? Colors.primary : Colors.border,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.oversChipText, { color: oversMode === OVERS_MODES.CUSTOM ? Colors.primary : Colors.textSecondary }]}>
+                ⚙️ Custom
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Custom Overs Stepper & Numeric Editor */}
+          {oversMode === OVERS_MODES.CUSTOM && (
+            <View style={[styles.customOversCard, { backgroundColor: Colors.backgroundCard, borderColor: Colors.border }]}>
+              <Text style={[styles.customOversLabel, { color: Colors.textSecondary }]}>Select Custom Overs:</Text>
+              <View style={styles.stepperContainer}>
+                <TouchableOpacity
+                  onPress={() => {
+                    playBubblePop();
+                    setCustomOvers((prev) => Math.max(1, (parseInt(prev, 10) || 2) - 1));
+                  }}
+                  style={[styles.stepperBtn, { backgroundColor: Colors.primaryTint, borderColor: Colors.primary }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stepperBtnSymbol, { color: Colors.primary }]}>−</Text>
+                </TouchableOpacity>
+
+                <TextInput
+                  style={[
+                    styles.stepperTextInput,
+                    {
+                      backgroundColor: Colors.background,
+                      color: Colors.textPrimary,
+                      borderColor: Colors.borderLight,
+                    },
+                  ]}
+                  keyboardType="number-pad"
+                  value={String(customOvers)}
+                  onChangeText={(val) => {
+                    const clean = val.replace(/[^0-9]/g, '');
+                    if (clean === '') {
+                      setCustomOvers('');
+                    } else {
+                      const num = parseInt(clean, 10);
+                      setCustomOvers(Math.max(1, Math.min(50, num)));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!customOvers || parseInt(customOvers, 10) < 1) {
+                      setCustomOvers(2);
+                    }
+                  }}
+                  maxLength={2}
+                  textAlign="center"
+                />
+
+                <TouchableOpacity
+                  onPress={() => {
+                    playBubblePop();
+                    setCustomOvers((prev) => Math.min(50, (parseInt(prev, 10) || 1) + 1));
+                  }}
+                  style={[styles.stepperBtn, { backgroundColor: Colors.primaryTint, borderColor: Colors.primary }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stepperBtnSymbol, { color: Colors.primary }]}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Description helper */}
+          <Text style={[styles.oversDesc, { color: Colors.textMuted }]}>
+            {oversMode === OVERS_MODES.SUPER_OVER
+              ? '⚡ 1 Over (6 balls) per match'
+              : oversMode === OVERS_MODES.UNLIMITED
+              ? '♾️ Unlimited overs · batsman plays until OUT'
+              : `🏏 ${parseInt(customOvers, 10) || 2} Overs · ${(parseInt(customOvers, 10) || 2) * 6} Balls per match`}
+          </Text>
+        </View>
+
         {/* Preview */}
         <View
           style={[
@@ -128,7 +275,18 @@ export default function CreateGameScreen({ navigation }) {
             },
           ]}
         >
-          <Text style={[styles.previewTitle, { color: Colors.textMuted }]}>LOBBY PREVIEW</Text>
+          <View style={styles.previewHeaderRow}>
+            <Text style={[styles.previewTitle, { color: Colors.textMuted }]}>LOBBY PREVIEW</Text>
+            <View style={[styles.previewOversTag, { backgroundColor: Colors.primaryTint, borderColor: Colors.borderLight }]}>
+              <Text style={[styles.previewOversTagText, { color: Colors.primary }]}>
+                {oversMode === OVERS_MODES.SUPER_OVER
+                  ? '⚡ 1 Over (6b)'
+                  : oversMode === OVERS_MODES.UNLIMITED
+                  ? '♾️ Unlimited'
+                  : `🏏 ${parseInt(customOvers, 10) || 2} Overs (${(parseInt(customOvers, 10) || 2) * 6}b)`}
+              </Text>
+            </View>
+          </View>
           {isValidCombo ? (
             <View style={styles.previewGrid}>
               {Array.from({ length: teamCount }).map((_, ti) => {
@@ -217,6 +375,75 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chipText: { fontSize: Typography.sm, fontWeight: Typography.bold },
+  oversChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  oversChipText: { fontSize: Typography.xs, fontWeight: Typography.bold },
+  customOversCard: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  customOversLabel: { fontSize: Typography.sm, fontWeight: Typography.semibold },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  stepperBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperBtnSymbol: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    lineHeight: 22,
+  },
+  stepperTextInput: {
+    width: 54,
+    height: 38,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
+    paddingVertical: 0,
+  },
+  oversDesc: {
+    fontSize: Typography.xs,
+    marginTop: Spacing.xs,
+    fontStyle: 'italic',
+  },
+  previewHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  previewOversTag: {
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  previewOversTagText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+  },
   previewCard: {
     marginHorizontal: Spacing.xl,
     borderRadius: BorderRadius.xl,
@@ -228,7 +455,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 3,
   },
-  previewTitle: { fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2, marginBottom: Spacing.md },
+  previewTitle: { fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2 },
   previewGrid: { flexDirection: 'row', gap: Spacing.md },
   previewTeam: {
     flex: 1,

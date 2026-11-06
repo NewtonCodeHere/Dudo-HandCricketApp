@@ -242,6 +242,13 @@ export default function OnlineGameScreen({ route, navigation }) {
             <Text style={styles.inningsLabel}>
               {game.currentInnings === 1 ? '1st INNINGS' : '2nd INNINGS'}
             </Text>
+            <Text style={[styles.matchFormatText, { color: Colors.primary }]}>
+              {game.overs === 1
+                ? '⚡ Super Over (6 balls)'
+                : game.overs
+                ? `🏏 ${game.overs} Overs (${game.maxBalls || game.overs * 6} balls)`
+                : '♾️ Unlimited Overs'}
+            </Text>
           </View>
           {game.target && (
             <View style={styles.targetBadge}>
@@ -277,7 +284,16 @@ export default function OnlineGameScreen({ route, navigation }) {
         {/* My match or spectator view */}
         {!isSpectating && myMatch?.status === 'ACTIVE' ? (
           <View style={styles.myMatchSection}>
-            <Text style={styles.sectionTitle}>YOUR MATCH</Text>
+            <View style={styles.myMatchHeaderRow}>
+              <Text style={styles.sectionTitle}>YOUR MATCH</Text>
+              <View style={[styles.myMatchOversPill, { backgroundColor: Colors.backgroundCard, borderColor: Colors.borderLight }]}>
+                <Text style={[styles.myMatchOversText, { color: Colors.primary }]}>
+                  {Math.floor((myMatch.ballHistory?.length || 0) / 6)}.{(myMatch.ballHistory?.length || 0) % 6}
+                  {game.overs ? ` / ${game.overs} Ov` : ' Ov'}
+                  {game.maxBalls ? ` (${myMatch.ballHistory?.length || 0}/${game.maxBalls}b)` : ''}
+                </Text>
+              </View>
+            </View>
 
             {/* Ball History */}
             <BallHistory history={myMatch.ballHistory || []} />
@@ -338,6 +354,7 @@ export default function OnlineGameScreen({ route, navigation }) {
             spectatorMatchIndex={spectatorMatchIndex}
             onSwitchMatch={() => setSpectatorMatchIndex((i) => (i + 1) % Math.max(1, spectatorMatches.length))}
             myPlayer={myPlayer}
+            myMatch={myMatch}
           />
         ) : null}
       </ScrollView>
@@ -411,6 +428,11 @@ function MatchCard({ match, game, isMyMatch, team0Color, team1Color }) {
   const bowlPlayer = game.players[match.bowlingPlayerId];
   const batTeamColor = game.teams[0].players.includes(match.battingPlayerId) ? team0Color : team1Color;
 
+  const ballsCount = (match.ballHistory || []).length;
+  const overNumber = Math.floor(ballsCount / 6);
+  const ballInOver = ballsCount % 6;
+  const overDisplay = `${overNumber}.${ballInOver}`;
+
   return (
     <View style={[styles.matchCard, isMyMatch && styles.matchCardHighlight]}>
       {isMyMatch && (
@@ -422,7 +444,9 @@ function MatchCard({ match, game, isMyMatch, team0Color, team1Color }) {
         <View style={styles.matchPlayer}>
           <Text style={[styles.matchPlayerName, { color: batTeamColor }]}>{batPlayer?.name || '?'}</Text>
           <Text style={[styles.matchPlayerScore, { color: batTeamColor }]}>{batPlayer?.score || 0}</Text>
-          <Text style={styles.matchPlayerRole}>🏏 BAT</Text>
+          <Text style={styles.matchPlayerRole}>
+            🏏 BAT · {overDisplay}{game.overs ? `/${game.overs}` : ''} Ov
+          </Text>
         </View>
         <View style={styles.matchVs}>
           <Text style={styles.matchVsText}>⚔️</Text>
@@ -435,7 +459,9 @@ function MatchCard({ match, game, isMyMatch, team0Color, team1Color }) {
         <View style={[styles.matchPlayer, styles.matchPlayerRight]}>
           <Text style={styles.matchPlayerName}>{bowlPlayer?.name || '?'}</Text>
           <Text style={styles.matchPlayerScore}>{bowlPlayer?.score || 0}</Text>
-          <Text style={styles.matchPlayerRole}>⚾ BOWL</Text>
+          <Text style={styles.matchPlayerRole}>
+            ⚾ BOWL · {ballsCount}{game.maxBalls ? `/${game.maxBalls}` : ''}b
+          </Text>
         </View>
       </View>
       {/* Ball history mini */}
@@ -450,7 +476,7 @@ function MatchCard({ match, game, isMyMatch, team0Color, team1Color }) {
   );
 }
 
-function SpectatorView({ matches, game, spectatorMatchIndex, onSwitchMatch, myPlayer }) {
+function SpectatorView({ matches, game, spectatorMatchIndex, onSwitchMatch, myPlayer, myMatch }) {
   const activeMatch = matches[spectatorMatchIndex];
   const batPlayer = activeMatch ? game.players[activeMatch.battingPlayerId] : null;
   const bowlPlayer = activeMatch ? game.players[activeMatch.bowlingPlayerId] : null;
@@ -458,7 +484,9 @@ function SpectatorView({ matches, game, spectatorMatchIndex, onSwitchMatch, myPl
   return (
     <View style={styles.spectatorSection}>
       <View style={styles.spectatorHeader}>
-        <Text style={styles.youAreOutText}>💀 YOU ARE OUT</Text>
+        <Text style={styles.youAreOutText}>
+          {myMatch?.oversFinished ? '🏁 OVERS COMPLETED' : '💀 YOU ARE OUT'}
+        </Text>
         <Text style={styles.myScoreText}>Your Score: {myPlayer.score}</Text>
       </View>
 
@@ -551,6 +579,7 @@ const styles = StyleSheet.create({
     paddingTop: 52, paddingHorizontal: Spacing.xl, marginBottom: Spacing.lg,
   },
   inningsLabel: { color: Colors.textMuted, fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 2 },
+  matchFormatText: { fontSize: 11, fontWeight: '700', marginTop: 2, letterSpacing: 0.5 },
   targetBadge: { backgroundColor: Colors.accentGold + '22', borderRadius: BorderRadius.full, paddingHorizontal: Spacing.md, paddingVertical: 4, borderWidth: 1, borderColor: Colors.accentGold + '55', alignItems: 'center' },
   targetLabel: { color: Colors.accentGold, fontSize: Typography.xs, fontWeight: Typography.bold, letterSpacing: 1 },
   targetScore: { color: Colors.accentGold, fontSize: Typography.lg, fontWeight: Typography.black },
@@ -626,6 +655,23 @@ const styles = StyleSheet.create({
   miniBallText: { color: Colors.textPrimary, fontSize: 10, fontWeight: Typography.bold },
 
   myMatchSection: { paddingHorizontal: Spacing.xl },
+  myMatchHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.xs,
+  },
+  myMatchOversPill: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+  },
+  myMatchOversText: {
+    fontSize: Typography.xs,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
   statusArea: { minHeight: 80, alignItems: 'center', justifyContent: 'center', marginVertical: Spacing.md },
   waitCard: {
     backgroundColor: Colors.backgroundCard, borderRadius: BorderRadius.xl,

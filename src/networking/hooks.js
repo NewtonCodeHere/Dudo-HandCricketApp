@@ -31,8 +31,8 @@ export function useSocket() {
 export function useLobby() {
   const { subscribe, send } = useSocket();
 
-  const createGame = useCallback((playerName, maxPlayers, teamCount) => {
-    send(SOCKET_EVENTS.CREATE_GAME, { playerName, maxPlayers, teamCount });
+  const createGame = useCallback((playerName, maxPlayers, teamCount, overs) => {
+    send(SOCKET_EVENTS.CREATE_GAME, { playerName, maxPlayers, teamCount, overs });
   }, [send]);
 
   const joinGame = useCallback((gameCode, playerName) => {

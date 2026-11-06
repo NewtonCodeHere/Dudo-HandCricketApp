@@ -146,6 +146,15 @@ export default function LobbyScreen({ route, navigation }) {
           <Text style={[styles.playerCount, { color: Colors.textMuted }]}>
             {totalJoined}/{game.maxPlayers} players assembled
           </Text>
+          <View style={[styles.formatTag, { backgroundColor: Colors.primaryTint, borderColor: Colors.borderLight }]}>
+            <Text style={[styles.formatTagText, { color: Colors.primary }]}>
+              {game.overs === 1
+                ? '⚡ SUPER OVER (1 Over · 6 Balls)'
+                : game.overs
+                ? `🏏 ${game.overs} OVERS (${game.maxBalls || game.overs * 6} Balls)`
+                : '♾️ UNLIMITED OVERS'}
+            </Text>
+          </View>
         </View>
 
         {/* Teams */}
@@ -338,7 +347,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   codeBtnText: { fontSize: Typography.sm, fontWeight: '700' },
-  playerCount: { fontSize: Typography.xs, fontWeight: '600' },
+  playerCount: { fontSize: Typography.xs, fontWeight: '600', marginBottom: Spacing.sm },
+  formatTag: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  formatTagText: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
 
   sectionTitle: { fontSize: Typography.xs, fontWeight: '700', letterSpacing: 2, marginBottom: Spacing.md },
   teamCard: {

@@ -33,7 +33,7 @@ class GameManager {
 
   // ─── Game Creation ───────────────────────────────────────────────────────
 
-  createGame({ hostId, hostName, maxPlayers, teamCount }) {
+  createGame({ hostId, hostName, maxPlayers, teamCount, overs }) {
     if (!isValidPlayerCount(maxPlayers, teamCount)) {
       return { error: 'Invalid player/team combination' };
     }
@@ -67,12 +67,17 @@ class GameManager {
       isHost: true,
     };
 
+    const parsedOvers = (overs && !isNaN(overs) && overs > 0) ? parseInt(overs, 10) : null;
+    const maxBalls = parsedOvers ? parsedOvers * 6 : null;
+
     const game = {
       gameCode: code,
       hostId,
       maxPlayers,
       playersPerTeam: maxPlayers / teamCount,
       teamCount,
+      overs: parsedOvers,
+      maxBalls,
       status: GAME_STATUS.LOBBY,
       players: { [hostId]: host },
       teams,
@@ -235,6 +240,8 @@ class GameManager {
         battingPlayerId,
         bowlingPlayerId,
         status: 'ACTIVE',
+        overs: game.overs || null,
+        maxBalls: game.maxBalls || null,
         ballHistory: [],
         pendingBat: null,
         pendingBowl: null,
@@ -298,6 +305,9 @@ class GameManager {
     match.pendingBowl = null;
 
     const battingPlayer = game.players[match.battingPlayerId];
+    if (battingPlayer) {
+      battingPlayer.ballsPlayed = (battingPlayer.ballsPlayed || 0) + 1;
+    }
 
     if (result.isOut) {
       battingPlayer.status = PLAYER_STATUS.SPECTATING;
@@ -326,6 +336,21 @@ class GameManager {
         }
       }
 
+      // Check if overs quota reached
+      const matchMaxBalls = match.maxBalls || game.maxBalls;
+      if (matchMaxBalls && match.ballHistory.length >= matchMaxBalls) {
+        battingPlayer.status = PLAYER_STATUS.SPECTATING;
+        match.status = 'FINISHED';
+        match.oversFinished = true;
+
+        const inningsOver = this.checkInningsOver(game);
+        if (inningsOver) {
+          return this.handleInningsEnd(game, match, ball, result);
+        }
+
+        return { ball, result, match, game, matchFinished: true, inningsOver: false, oversFinished: true };
+      }
+
       return { ball, result, match, game, matchFinished: false };
     }
   }
@@ -350,7 +375,11 @@ class GameManager {
       game.target = battingTeam.totalScore + 1;
       game.status = GAME_STATUS.INNINGS_BREAK;
       game.inningsResult = { innings: 1, score: battingTeam.totalScore, target: game.target };
-      return { ball, result, match, game, matchFinished: true, inningsOver: true, inningsBreak: true };
+      return {
+        ball, result, match, game,
+        matchFinished: true, inningsOver: true, inningsBreak: true,
+        oversFinished: !!match.oversFinished,
+      };
     } else {
       // Game over — determine winner
       const team0 = game.teams[0];
@@ -373,7 +402,6 @@ class GameManager {
     game.status = GAME_STATUS.INNINGS_2;
     game.currentInnings = 2;
 
-    // Reset player scores for innings 2 tracking? No — accumulate.
     // Create new matches with swapped roles
     const newMatches = this.createMatches(game, 2);
     game.matches.push(...newMatches);
@@ -393,6 +421,7 @@ class GameManager {
     return {
       ball, result, match, game,
       matchFinished: true, inningsOver: true, gameOver: true,
+      oversFinished: !!match.oversFinished,
       winnerTeamId, winnerTeamName: winnerTeam?.name,
     };
   }
