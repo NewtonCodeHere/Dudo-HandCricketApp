@@ -21,6 +21,8 @@ export default function SettingsScreen({ navigation }) {
   const {
     sfxEnabled,
     toggleSfx,
+    cheerEnabled,
+    toggleCheer,
     bgmEnabled,
     toggleBgm,
     commentaryEnabled,
@@ -28,7 +30,7 @@ export default function SettingsScreen({ navigation }) {
     voiceGender,
     setVoiceGender,
     previewVoice,
-    playCheer,
+    previewCheer,
     playBubblePop,
   } = useAudio();
   const { isDark, toggleTheme, accentColor, setAccentColor, presets } = useTheme();
@@ -100,7 +102,7 @@ export default function SettingsScreen({ navigation }) {
                   Sound Effects
                 </Text>
                 <Text style={[styles.rowSub, { color: Colors.textMuted }]}>
-                  Bubble clicks, crowd cheering & wicket sounds
+                  Bubble clicks & wicket sounds
                 </Text>
               </View>
             </View>
@@ -109,6 +111,30 @@ export default function SettingsScreen({ navigation }) {
               onValueChange={() => {
                 playBubblePop();
                 toggleSfx();
+              }}
+              trackColor={{ false: '#CBD5E1', true: Colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          {/* Crowd Cheering */}
+          <View style={[styles.row, { borderBottomColor: Colors.border }]}>
+            <View style={styles.rowLeft}>
+              <Text style={styles.rowIcon}>🎉</Text>
+              <View>
+                <Text style={[styles.rowLabel, { color: Colors.textPrimary }]}>
+                  Crowd Cheering
+                </Text>
+                <Text style={[styles.rowSub, { color: Colors.textMuted }]}>
+                  Celebration cheers on boundaries & sixes
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={cheerEnabled}
+              onValueChange={() => {
+                playBubblePop();
+                toggleCheer();
               }}
               trackColor={{ false: '#CBD5E1', true: Colors.primary }}
               thumbColor="#FFFFFF"
@@ -231,7 +257,7 @@ export default function SettingsScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={() => playCheer()}
+              onPress={() => previewCheer()}
               style={[styles.testVoiceBtn, { borderColor: Colors.primary, backgroundColor: Colors.primaryTint, marginTop: 8 }]}
               activeOpacity={0.8}
             >

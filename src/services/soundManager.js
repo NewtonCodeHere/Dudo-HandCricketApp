@@ -92,7 +92,7 @@ class SoundService {
         audio.volume = volume;
         audio.play().catch(() => {});
         return;
-      } catch (_e) {
+      } catch {
         // Fall through
       }
     }
@@ -142,7 +142,7 @@ class SoundService {
           audio.play().catch(() => {});
           this.bgmSoundInstance = audio;
           return;
-        } catch (_e) {
+        } catch {
           // Fall through
         }
       }
