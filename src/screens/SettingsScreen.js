@@ -9,12 +9,14 @@ import {
   Animated,
   Image,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius } from '../theme/tokens';
 import { useColors, useTheme, ThemeToggle } from '../theme/ThemeContext';
 import { useAudio } from '../context/AudioContext';
 import FloatingBubbles from '../components/FloatingBubbles';
+import { authService } from '../services/authService';
 
 export default function SettingsScreen({ navigation }) {
   const Colors = useColors();
@@ -37,6 +39,34 @@ export default function SettingsScreen({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [customHex, setCustomHex] = useState(accentColor);
   const [hexError, setHexError] = useState('');
+  const [authState, setAuthState] = useState(() => ({
+    user: authService.getUser(),
+    token: authService.getToken(),
+  }));
+  const [isLinking, setIsLinking] = useState(false);
+  const [linkStatusMsg, setLinkStatusMsg] = useState('');
+
+  useEffect(() => {
+    const unsub = authService.subscribe((state) => {
+      setAuthState(state);
+    });
+    authService.initAuthSession().catch(() => {});
+    return unsub;
+  }, []);
+
+  const handleLinkGooglePlay = async () => {
+    setIsLinking(true);
+    setLinkStatusMsg('');
+    try {
+      const mockIdToken = 'google_play_verified_token_' + Date.now();
+      await authService.linkGoogleAccount(mockIdToken);
+      setLinkStatusMsg('Google Play account linked successfully! Stats synchronized.');
+    } catch (err) {
+      setLinkStatusMsg(err.message || 'Linking failed. Please check network connection.');
+    } finally {
+      setIsLinking(false);
+    }
+  };
 
   useEffect(() => {
     Animated.timing(fadeAnim, { toValue: 1, duration: 400, useNativeDriver: true }).start();
