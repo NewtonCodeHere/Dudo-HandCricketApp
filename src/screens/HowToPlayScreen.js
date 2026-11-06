@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
-import { useColors, useTheme } from '../theme/ThemeContext';
+import { Typography, Spacing, BorderRadius } from '../theme/tokens';
+import { useColors } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 
 const steps = [
   {
@@ -42,16 +44,17 @@ const onlineRules = [
 
 export default function HowToPlayScreen({ navigation }) {
   const Colors = useColors();
-  const { isDark } = useTheme();
+  const { playBubblePop } = useAudio();
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { playBubblePop(); navigation.goBack(); }} style={styles.backBtn}>
             <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: Colors.textPrimary }]}>HOW TO PLAY</Text>
@@ -63,7 +66,7 @@ export default function HowToPlayScreen({ navigation }) {
           <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>THE BASICS</Text>
           {steps.map((s, i) => (
             <View key={i} style={[styles.stepCard, { backgroundColor: Colors.backgroundCard, borderColor: Colors.border, shadowColor: Colors.shadow }]}>
-              <View style={[styles.stepEmojiBox, { backgroundColor: isDark ? 'rgba(30,128,255,0.1)' : 'rgba(13,110,253,0.08)' }]}>
+              <View style={[styles.stepEmojiBox, { backgroundColor: Colors.primaryTint }]}>
                 <Text style={styles.stepEmoji}>{s.emoji}</Text>
               </View>
               <View style={styles.stepContent}>
@@ -101,8 +104,8 @@ export default function HowToPlayScreen({ navigation }) {
           ))}
         </View>
 
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.doneBtn} activeOpacity={0.85}>
-          <LinearGradient colors={Gradients.primary} style={styles.doneBtnGrad}>
+        <TouchableOpacity onPress={() => { playBubblePop(); navigation.goBack(); }} style={styles.doneBtn} activeOpacity={0.85}>
+          <LinearGradient colors={Colors.primaryGradient} style={styles.doneBtnGrad}>
             <Text style={styles.doneBtnText}>{"GOT IT, LET'S PLAY"}</Text>
           </LinearGradient>
         </TouchableOpacity>

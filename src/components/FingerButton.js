@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Typography, BorderRadius } from '../theme/tokens';
 import { useColors } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
 
 const FINGER_EMOJIS = {
   1: '☝️',
@@ -23,6 +24,7 @@ const FINGER_EMOJIS = {
 
 export default function FingerButton({ number, onPress, selected, disabled, size = 'normal' }) {
   const Colors = useColors();
+  const { playBubblePop } = useAudio();
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const glowAnim = useRef(new Animated.Value(0)).current;
 
@@ -60,6 +62,7 @@ export default function FingerButton({ number, onPress, selected, disabled, size
 
   const handlePress = () => {
     if (disabled) return;
+    playBubblePop();
     Animated.sequence([
       Animated.spring(scaleAnim, {
         toValue: 0.92,

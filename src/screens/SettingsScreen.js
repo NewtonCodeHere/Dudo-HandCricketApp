@@ -12,10 +12,25 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius } from '../theme/tokens';
-import { useColors, useTheme } from '../theme/ThemeContext';
+import { useColors, useTheme, ThemeToggle } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 
 export default function SettingsScreen({ navigation }) {
   const Colors = useColors();
+  const {
+    sfxEnabled,
+    toggleSfx,
+    bgmEnabled,
+    toggleBgm,
+    commentaryEnabled,
+    toggleCommentary,
+    voiceGender,
+    setVoiceGender,
+    previewVoice,
+    playCheer,
+    playBubblePop,
+  } = useAudio();
   const { isDark, toggleTheme, accentColor, setAccentColor, presets } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [customHex, setCustomHex] = useState(accentColor);
@@ -45,14 +60,17 @@ export default function SettingsScreen({ navigation }) {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: Colors.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={() => { playBubblePop(); navigation.goBack(); }} style={styles.backBtn}>
           <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: Colors.textPrimary }]}>SETTINGS</Text>
-        <View style={{ width: 60 }} />
+        <View style={styles.headerRight}>
+          <ThemeToggle />
+        </View>
       </View>
 
       <Animated.ScrollView
@@ -60,6 +78,170 @@ export default function SettingsScreen({ navigation }) {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
+        {/* Audio & Commentary Section */}
+        <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>AUDIO & COMMENTARY</Text>
+
+        <View
+          style={[
+            styles.card,
+            {
+              backgroundColor: Colors.backgroundCard,
+              borderColor: Colors.border,
+              shadowColor: Colors.shadow,
+            },
+          ]}
+        >
+          {/* Sound Effects */}
+          <View style={[styles.row, { borderBottomColor: Colors.border }]}>
+            <View style={styles.rowLeft}>
+              <Text style={styles.rowIcon}>🔊</Text>
+              <View>
+                <Text style={[styles.rowLabel, { color: Colors.textPrimary }]}>
+                  Sound Effects
+                </Text>
+                <Text style={[styles.rowSub, { color: Colors.textMuted }]}>
+                  Bubble clicks, crowd cheering & wicket sounds
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={sfxEnabled}
+              onValueChange={() => {
+                playBubblePop();
+                toggleSfx();
+              }}
+              trackColor={{ false: '#CBD5E1', true: Colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          {/* Background Music */}
+          <View style={[styles.row, { borderBottomColor: Colors.border }]}>
+            <View style={styles.rowLeft}>
+              <Text style={styles.rowIcon}>🎵</Text>
+              <View>
+                <Text style={[styles.rowLabel, { color: Colors.textPrimary }]}>
+                  Background Music
+                </Text>
+                <Text style={[styles.rowSub, { color: Colors.textMuted }]}>
+                  Calm ambient soundtrack loop
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={bgmEnabled}
+              onValueChange={() => {
+                playBubblePop();
+                toggleBgm();
+              }}
+              trackColor={{ false: '#CBD5E1', true: Colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          {/* Cricket Commentary */}
+          <View style={[styles.row, { borderBottomColor: Colors.border }]}>
+            <View style={styles.rowLeft}>
+              <Text style={styles.rowIcon}>🎙️</Text>
+              <View>
+                <Text style={[styles.rowLabel, { color: Colors.textPrimary }]}>
+                  Cricket Commentary
+                </Text>
+                <Text style={[styles.rowSub, { color: Colors.textMuted }]}>
+                  Live voice commentary & score calls
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={commentaryEnabled}
+              onValueChange={() => {
+                playBubblePop();
+                toggleCommentary();
+              }}
+              trackColor={{ false: '#CBD5E1', true: Colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          {/* Voice Gender Selection */}
+          <View style={styles.voiceSection}>
+            <Text style={[styles.voiceSectionLabel, { color: Colors.textSecondary }]}>
+              COMMENTARY VOICE GENDER
+            </Text>
+            <View style={styles.previewRow}>
+              <TouchableOpacity
+                onPress={() => {
+                  playBubblePop();
+                  setVoiceGender('female');
+                }}
+                style={[
+                  styles.themeChip,
+                  {
+                    backgroundColor: voiceGender === 'female' ? Colors.primaryTint : Colors.backgroundElevated,
+                    borderColor: voiceGender === 'female' ? Colors.primary : Colors.border,
+                    borderWidth: voiceGender === 'female' ? 2 : 1,
+                  },
+                ]}
+              >
+                <Text style={styles.themeChipIcon}>👩</Text>
+                <Text
+                  style={[
+                    styles.themeChipLabel,
+                    { color: voiceGender === 'female' ? Colors.primary : Colors.textMuted },
+                  ]}
+                >
+                  Female Voice
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => {
+                  playBubblePop();
+                  setVoiceGender('male');
+                }}
+                style={[
+                  styles.themeChip,
+                  {
+                    backgroundColor: voiceGender === 'male' ? Colors.primaryTint : Colors.backgroundElevated,
+                    borderColor: voiceGender === 'male' ? Colors.primary : Colors.border,
+                    borderWidth: voiceGender === 'male' ? 2 : 1,
+                  },
+                ]}
+              >
+                <Text style={styles.themeChipIcon}>👨</Text>
+                <Text
+                  style={[
+                    styles.themeChipLabel,
+                    { color: voiceGender === 'male' ? Colors.primary : Colors.textMuted },
+                  ]}
+                >
+                  Male Voice
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => previewVoice()}
+              style={[styles.testVoiceBtn, { borderColor: Colors.primary, backgroundColor: Colors.primaryTint }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.testVoiceText, { color: Colors.primary }]}>
+                📢  Test Commentary Voice
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => playCheer()}
+              style={[styles.testVoiceBtn, { borderColor: Colors.primary, backgroundColor: Colors.primaryTint, marginTop: 8 }]}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.testVoiceText, { color: Colors.primary }]}>
+                🎉  Test Crowd Cheer Sound
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Appearance Section */}
         <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>THEME & APPEARANCE</Text>
 
@@ -326,6 +508,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
   },
   backBtn: { width: 60 },
+  headerRight: { width: 60, alignItems: 'flex-end', justifyContent: 'center' },
   backText: { fontSize: Typography.lg, fontWeight: '600' },
   headerTitle: { fontSize: Typography.md, fontWeight: '900', letterSpacing: 3 },
   scroll: { padding: Spacing.xl, paddingBottom: 60 },
@@ -371,6 +554,22 @@ const styles = StyleSheet.create({
   },
   themeChipIcon: { fontSize: 26 },
   themeChipLabel: { fontSize: Typography.sm, fontWeight: '700', letterSpacing: 0.5 },
+  voiceSection: { padding: Spacing.lg },
+  voiceSectionLabel: {
+    fontSize: Typography.xs,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: Spacing.xs,
+  },
+  testVoiceBtn: {
+    marginTop: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  testVoiceText: { fontSize: Typography.sm, fontWeight: '700', letterSpacing: 0.5 },
 
   presetGrid: {
     flexDirection: 'row',

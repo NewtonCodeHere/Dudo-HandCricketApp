@@ -6,8 +6,8 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const systemScheme = useColorScheme();
-  // null = follow system, 'dark' = force dark, 'light' = force light
-  const [override, setOverride] = useState(null);
+  // 'dark' = default sleek dark theme, toggleable by user
+  const [override, setOverride] = useState('dark');
   const [accentColor, setAccentColor] = useState(DEFAULT_ACCENT);
 
   const isDark = override !== null ? override === 'dark' : systemScheme !== 'light';

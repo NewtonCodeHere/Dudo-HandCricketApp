@@ -9,11 +9,13 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
-import { useColors, useTheme } from '../theme/ThemeContext';
+import { useColors } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 
 export default function OfflineSetupScreen({ navigation }) {
   const Colors = useColors();
-  const { isDark } = useTheme();
+  const { playBubblePop } = useAudio();
   const [difficulty, setDifficulty] = useState('medium');
   const [playerBatsFirst, setPlayerBatsFirst] = useState(true);
 
@@ -39,6 +41,7 @@ export default function OfflineSetupScreen({ navigation }) {
   ];
 
   const startGame = () => {
+    playBubblePop();
     navigation.navigate('OfflineGame', { difficulty, playerBatsFirst });
   };
 
@@ -46,11 +49,12 @@ export default function OfflineSetupScreen({ navigation }) {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { playBubblePop(); navigation.goBack(); }} style={styles.backBtn}>
             <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
           <Text style={[styles.pageTitle, { color: Colors.textPrimary }]}>OFFLINE DUEL</Text>
@@ -64,7 +68,7 @@ export default function OfflineSetupScreen({ navigation }) {
               styles.botCard,
               {
                 backgroundColor: Colors.backgroundCard,
-                borderColor: isDark ? 'rgba(30,128,255,0.25)' : Colors.border,
+                borderColor: Colors.borderLight,
                 shadowColor: Colors.shadow,
               },
             ]}

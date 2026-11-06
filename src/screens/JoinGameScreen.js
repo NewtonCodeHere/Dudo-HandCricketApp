@@ -6,12 +6,15 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
 import { useColors } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 import { useLobby } from '../networking/hooks';
 import { SOCKET_EVENTS } from '../networking/config';
 import * as SocketClient from '../networking/socket';
 
 export default function JoinGameScreen({ navigation }) {
   const Colors = useColors();
+  const { playBubblePop } = useAudio();
   const [playerName, setPlayerName] = useState('');
   const [gameCode, setGameCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,6 +51,7 @@ export default function JoinGameScreen({ navigation }) {
     if (code.length < 6) { setError('Enter a valid 6-character room code'); shake(); return; }
     setError('');
     setLoading(true);
+    playBubblePop();
     joinGame(code, playerName.trim());
   };
 
@@ -58,10 +62,11 @@ export default function JoinGameScreen({ navigation }) {
     >
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { playBubblePop(); navigation.goBack(); }} style={styles.backBtn}>
             <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: Colors.textPrimary }]}>JOIN LOBBY</Text>

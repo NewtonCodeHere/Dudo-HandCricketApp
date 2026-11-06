@@ -8,27 +8,30 @@ import {
   StatusBar,
   Dimensions,
   Image,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius } from '../theme/tokens';
-import { useColors, ThemeToggle } from '../theme/ThemeContext';
+import { useColors } from '../theme/ThemeContext';
+import { SoundManager } from '../services/soundManager';
 
 const { width, height } = Dimensions.get('window');
 
 function AnimatedParticle({ delay, x, size, color }) {
+  const isWeb = Platform.OS === 'web';
   const anim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
         Animated.delay(delay),
-        Animated.timing(anim, { toValue: 1, duration: 4500 + Math.random() * 3000, useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0, duration: 0, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1, duration: 4500 + Math.random() * 3000, useNativeDriver: !isWeb }),
+        Animated.timing(anim, { toValue: 0, duration: 0, useNativeDriver: !isWeb }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [anim, delay]);
+  }, [anim, delay, isWeb]);
 
   const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [height + 20, -20] });
   const opacity = anim.interpolate({ inputRange: [0, 0.15, 0.85, 1], outputRange: [0, 0.4, 0.2, 0] });
@@ -45,25 +48,28 @@ function AnimatedParticle({ delay, x, size, color }) {
 
 export default function HomeScreen({ navigation }) {
   const Colors = useColors();
-  const titleAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const isWeb = Platform.OS === 'web';
+  const titleAnim = useRef(new Animated.Value(isWeb ? 1 : 0)).current;
+  const fadeAnim = useRef(new Animated.Value(isWeb ? 1 : 0)).current;
   const logoAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.sequence([
-      Animated.delay(100),
-      Animated.parallel([
-        Animated.spring(titleAnim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
-        Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      ]),
-    ]).start();
+    if (!isWeb) {
+      Animated.sequence([
+        Animated.delay(100),
+        Animated.parallel([
+          Animated.spring(titleAnim, { toValue: 1, tension: 80, friction: 8, useNativeDriver: true }),
+          Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        ]),
+      ]).start();
+    }
     Animated.loop(
       Animated.sequence([
-        Animated.timing(logoAnim, { toValue: 1, duration: 2200, useNativeDriver: true }),
-        Animated.timing(logoAnim, { toValue: 0, duration: 2200, useNativeDriver: true }),
+        Animated.timing(logoAnim, { toValue: 1, duration: 2200, useNativeDriver: !isWeb }),
+        Animated.timing(logoAnim, { toValue: 0, duration: 2200, useNativeDriver: !isWeb }),
       ]),
     ).start();
-  }, [fadeAnim, logoAnim, titleAnim]);
+  }, [fadeAnim, isWeb, logoAnim, titleAnim]);
 
   const titleTranslateY = titleAnim.interpolate({ inputRange: [0, 1], outputRange: [-25, 0] });
   const logoScale = logoAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] });
@@ -76,6 +82,11 @@ export default function HomeScreen({ navigation }) {
       size: 3 + Math.random() * 4,
     })), []);
 
+  const handleNavigate = (screen) => {
+    SoundManager.playBubblePop();
+    navigation.navigate(screen);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
@@ -85,15 +96,14 @@ export default function HomeScreen({ navigation }) {
         <AnimatedParticle key={p.id} x={p.x} delay={p.delay} size={p.size} color={Colors.primary} />
       ))}
 
-      {/* Top Header Bar with Mode Toggle */}
+      {/* Top Header Bar without theme toggle icon */}
       <View style={styles.topBar}>
         <View style={[styles.badgeContainer, { backgroundColor: Colors.primaryTint, borderColor: Colors.borderLight }]}>
           <Text style={[styles.badgeText, { color: Colors.primary }]}>DUDO CRICKET</Text>
         </View>
-        <ThemeToggle />
       </View>
 
-      {/* Ambient background glow */}
+      {/* Ambient circular background glow behind logo */}
       <View style={[styles.headerGlow, { backgroundColor: Colors.primary }]} />
 
       <Animated.View
@@ -122,19 +132,19 @@ export default function HomeScreen({ navigation }) {
         <Text style={[styles.title, { color: Colors.textPrimary }]}>HAND CRICKET</Text>
         <Text style={[styles.subtitle, { color: Colors.textSecondary }]}>The Ultimate Finger Clash</Text>
 
-        {/* Menu Buttons styled like modern reference */}
+        {/* Menu Buttons */}
         <View style={styles.menu}>
           <MenuButton
             label="⚡  OFFLINE BATTLE"
             sublabel="Play vs AI (Easy, Medium, Hard)"
-            onPress={() => navigation.navigate('OfflineSetup')}
+            onPress={() => handleNavigate('OfflineSetup')}
             gradient={Colors.primaryGradient}
             Colors={Colors}
           />
           <MenuButton
             label="🌐  ONLINE MULTIPLAYER"
             sublabel="Real-time 1v1 & Team matches"
-            onPress={() => navigation.navigate('OnlineSetup')}
+            onPress={() => handleNavigate('OnlineSetup')}
             gradient={[Colors.primaryDark, Colors.primary]}
             Colors={Colors}
           />
@@ -142,12 +152,12 @@ export default function HomeScreen({ navigation }) {
           <View style={styles.rowButtons}>
             <SmallMenuButton
               label="📖  Rules"
-              onPress={() => navigation.navigate('HowToPlay')}
+              onPress={() => handleNavigate('HowToPlay')}
               Colors={Colors}
             />
             <SmallMenuButton
               label="🎨  Theme & Colors"
-              onPress={() => navigation.navigate('Settings')}
+              onPress={() => handleNavigate('Settings')}
               Colors={Colors}
               highlight
             />
@@ -163,9 +173,10 @@ export default function HomeScreen({ navigation }) {
 }
 
 function MenuButton({ label, sublabel, onPress, gradient, Colors }) {
+  const isWeb = Platform.OS === 'web';
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const handlePressIn = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true, tension: 200 }).start();
-  const handlePressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 200 }).start();
+  const handlePressIn = () => Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: !isWeb, tension: 200 }).start();
+  const handlePressOut = () => Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: !isWeb, tension: 200 }).start();
 
   return (
     <Animated.View

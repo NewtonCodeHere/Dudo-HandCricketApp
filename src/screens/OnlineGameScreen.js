@@ -11,6 +11,8 @@ import BallResult from '../components/BallResult';
 import BallHistory from '../components/BallHistory';
 import Countdown from '../components/Countdown';
 import CelebrationOverlay from '../components/CelebrationOverlay';
+import FloatingBubbles from '../components/FloatingBubbles';
+import { useAudio } from '../context/AudioContext';
 import { useGameplay } from '../networking/hooks';
 import { SOCKET_EVENTS } from '../networking/config';
 import { FINGER_NUMBERS } from '../game/gameRules';
@@ -20,6 +22,7 @@ import { FINGER_NUMBERS } from '../game/gameRules';
 export default function OnlineGameScreen({ route, navigation }) {
   const { game: initialGame, matches: initialMatches, myPlayerId, isHost } = route.params;
   const Colors = useColors();
+  const { announceBallResult, playBubblePop } = useAudio();
 
   const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 
@@ -102,6 +105,7 @@ export default function OnlineGameScreen({ route, navigation }) {
 
         // 🎉 Celebration for big hits when player is batting
         const amCurrentlyBatting = resolvedMatch.battingPlayerId === myPlayerId;
+        announceBallResult(ball.runs, ball.isOut, amCurrentlyBatting);
         if (amCurrentlyBatting && !ball.isOut && ball.runs >= 6) {
           setCelebrationRuns(ball.runs);
         }
@@ -175,7 +179,7 @@ export default function OnlineGameScreen({ route, navigation }) {
       unsubGameOver(); unsubDisconnect(); unsubReconnect();
       if (resultTimer.current) clearTimeout(resultTimer.current);
     };
-  }, [myPlayerId, navigation, subscribe]);
+  }, [myPlayerId, navigation, subscribe, announceBallResult]);
 
   const onCountdownComplete = useCallback(() => {
     setShowCountdown(false);
@@ -191,6 +195,7 @@ export default function OnlineGameScreen({ route, navigation }) {
   }, [inputEnabled, submitted, submitBall]);
 
   const handleStartSecondInnings = () => {
+    playBubblePop();
     startSecondInnings();
   };
 
@@ -204,6 +209,7 @@ export default function OnlineGameScreen({ route, navigation }) {
     <View style={styles.container}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       {/* 🎉 Celebration overlay */}
       <CelebrationOverlay

@@ -8,20 +8,29 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
+import { Typography, Spacing, BorderRadius } from '../theme/tokens';
 import { useColors } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 
 export default function OnlineSetupScreen({ navigation }) {
   const Colors = useColors();
+  const { playBubblePop } = useAudio();
+
+  const handleNavigate = (route) => {
+    playBubblePop();
+    navigation.navigate(route);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { playBubblePop(); navigation.goBack(); }} style={styles.backBtn}>
             <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: Colors.textPrimary }]}>ONLINE ARENA</Text>
@@ -36,8 +45,8 @@ export default function OnlineSetupScreen({ navigation }) {
             emoji="🏟️"
             title="CREATE LOBBY"
             desc="Host a new room, share the code, and customize match settings."
-            gradient={Gradients.primary}
-            onPress={() => navigation.navigate('CreateGame')}
+            gradient={Colors.primaryGradient}
+            onPress={() => handleNavigate('CreateGame')}
             Colors={Colors}
           />
           <ModeCard
@@ -45,7 +54,7 @@ export default function OnlineSetupScreen({ navigation }) {
             title="JOIN WITH CODE"
             desc="Enter a 6-letter lobby code to battle your friends."
             gradient={['#00B8D4', '#0052D4']}
-            onPress={() => navigation.navigate('JoinGame')}
+            onPress={() => handleNavigate('JoinGame')}
             Colors={Colors}
           />
         </View>

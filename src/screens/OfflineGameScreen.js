@@ -18,6 +18,8 @@ import BallResult from '../components/BallResult';
 import BallHistory from '../components/BallHistory';
 import Countdown from '../components/Countdown';
 import CelebrationOverlay from '../components/CelebrationOverlay';
+import FloatingBubbles from '../components/FloatingBubbles';
+import { useAudio } from '../context/AudioContext';
 import {
   createOfflineGame,
   processBall,
@@ -32,6 +34,7 @@ const RESULT_DISPLAY_MS = 1800;
 
 export default function OfflineGameScreen({ route, navigation }) {
   const Colors = useColors();
+  const { announceBallResult, playBubblePop } = useAudio();
   const { difficulty = 'medium', playerBatsFirst = true } = route.params || {};
 
   const [gameState, setGameState] = useState(() =>
@@ -91,14 +94,23 @@ export default function OfflineGameScreen({ route, navigation }) {
 
       setGameState(newState);
 
+      if (newState.lastBall) {
+        announceBallResult(
+          newState.lastBall.runs,
+          newState.lastBall.isOut,
+          newState.lastBall.isPlayerBatting,
+        );
+      }
+
       if (newState.lastBall && !newState.lastBall.isOut && newState.lastBall.runs >= 4) {
         setCelebrationRuns(newState.lastBall.runs);
       }
     },
-    [inputEnabled, gameState],
+    [inputEnabled, gameState, announceBallResult],
   );
 
   const handleInningsBreakContinue = () => {
+    playBubblePop();
     setShowInningsBreak(false);
     const s2 = startSecondInnings(gameState);
     setGameState(s2);
@@ -109,6 +121,7 @@ export default function OfflineGameScreen({ route, navigation }) {
   };
 
   const handlePlayAgain = () => {
+    playBubblePop();
     const fresh = createOfflineGame({ difficulty, playerBatsFirst });
     setGameState(fresh);
     setSelectedNumber(null);
@@ -118,6 +131,7 @@ export default function OfflineGameScreen({ route, navigation }) {
   };
 
   const handleGoHome = () => {
+    playBubblePop();
     navigation.navigate('Home');
   };
 
@@ -132,6 +146,7 @@ export default function OfflineGameScreen({ route, navigation }) {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       {/* Celebration overlay */}
       <CelebrationOverlay

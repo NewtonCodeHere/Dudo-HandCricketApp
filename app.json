@@ -12,7 +12,7 @@
     },
     "android": {
       "package": "com.dudo.handcricketapp",
-      "versionCode": 1,
+      "versionCode": 2,
       "adaptiveIcon": {
         "backgroundColor": "#FF5A5F",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -35,13 +35,13 @@
         "expo-build-properties",
         {
           "android": {
-            "buildArchs": ["arm64-v8a", "armeabi-v7a"],
-            "enableMinifyInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true,
-            "enableBundleCompression": true
+            "enableMinifyInReleaseBuilds": false,
+            "enableShrinkResourcesInReleaseBuilds": false,
+            "extraProguardRules": "-dontwarn expo.modules.av.**\n-dontwarn expo.modules.core.**\n-dontwarn expo.modules.kotlin.**\n-keep class expo.modules.** { *; }\n-keep class com.swmansion.gesturehandler.** { *; }\n-keep class com.swmansion.reanimated.** { *; }"
           }
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

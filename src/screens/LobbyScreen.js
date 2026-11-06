@@ -7,6 +7,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius } from '../theme/tokens';
 import { useColors, useTheme } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 import { useLobby } from '../networking/hooks';
 import { SOCKET_EVENTS } from '../networking/config';
 import SocketClient from '../networking/socket';
@@ -14,6 +16,7 @@ import SocketClient from '../networking/socket';
 export default function LobbyScreen({ route, navigation }) {
   const { game: initialGame, player: initialPlayer, isHost: initialIsHost } = route.params;
   const Colors = useColors();
+  const { playBubblePop } = useAudio();
   const { isDark } = useTheme();
   const [game, setGame] = useState(initialGame);
   const [myPlayer, setMyPlayer] = useState(initialPlayer);
@@ -55,31 +58,36 @@ export default function LobbyScreen({ route, navigation }) {
   }, [navigation, subscribe, myPlayer.playerId, isHost]);
 
   const handleCopyCode = useCallback(async () => {
+    playBubblePop();
     Clipboard.setString(game.gameCode);
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);
-  }, [game.gameCode]);
+  }, [game.gameCode, playBubblePop]);
 
   const handleShare = useCallback(async () => {
+    playBubblePop();
     await Share.share({ message: `Join my DUDO Hand Cricket match! Room Code: ${game.gameCode}` });
-  }, [game.gameCode]);
+  }, [game.gameCode, playBubblePop]);
 
   const handleJoinTeam = useCallback((teamId) => {
+    playBubblePop();
     joinTeam(teamId);
-  }, [joinTeam]);
+  }, [joinTeam, playBubblePop]);
 
   const handleReady = useCallback(() => {
+    playBubblePop();
     setReady(!myPlayer.isReady);
-  }, [myPlayer.isReady, setReady]);
+  }, [myPlayer.isReady, setReady, playBubblePop]);
 
   const handleStartGame = useCallback(() => {
+    playBubblePop();
     const totalPlayers = Object.keys(game.players).length;
     if (totalPlayers < game.maxPlayers) {
       Alert.alert('Waiting for players', `Need ${game.maxPlayers} players to begin match. Currently ${totalPlayers}.`);
       return;
     }
     startGame();
-  }, [game, startGame]);
+  }, [game, startGame, playBubblePop]);
 
   const handleStartRename = (team) => {
     setEditingTeamId(team.teamId);
@@ -103,6 +111,7 @@ export default function LobbyScreen({ route, navigation }) {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: Colors.border }]}>

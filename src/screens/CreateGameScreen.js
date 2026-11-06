@@ -6,6 +6,8 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
 import { useColors } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 import { useLobby } from '../networking/hooks';
 import { SOCKET_EVENTS } from '../networking/config';
 import * as SocketClient from '../networking/socket';
@@ -15,6 +17,7 @@ const TEAM_OPTIONS = [2, 3, 4];
 
 export default function CreateGameScreen({ navigation }) {
   const Colors = useColors();
+  const { playBubblePop } = useAudio();
   const [playerName, setPlayerName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(6);
   const [teamCount, setTeamCount] = useState(2);
@@ -39,6 +42,7 @@ export default function CreateGameScreen({ navigation }) {
   }, [navigation, subscribe]);
 
   const handleCreate = () => {
+    playBubblePop();
     if (!playerName.trim()) { setError('Please enter your name'); return; }
     if (!isValidCombo) { setError('Invalid player/team division'); return; }
     setError('');
@@ -50,9 +54,10 @@ export default function CreateGameScreen({ navigation }) {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { playBubblePop(); navigation.goBack(); }} style={styles.backBtn}>
             <Text style={[styles.backText, { color: Colors.primary }]}>‹ Back</Text>
           </TouchableOpacity>
           <Text style={[styles.title, { color: Colors.textPrimary }]}>HOST GAME</Text>

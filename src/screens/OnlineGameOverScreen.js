@@ -6,10 +6,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Typography, Spacing, BorderRadius, Gradients } from '../theme/tokens';
 import { useColors } from '../theme/ThemeContext';
+import { useAudio } from '../context/AudioContext';
+import FloatingBubbles from '../components/FloatingBubbles';
 
 export default function OnlineGameOverScreen({ route, navigation }) {
   const { game, winnerTeamId, myPlayerId } = route.params;
   const Colors = useColors();
+  const { playCheer, playBubblePop } = useAudio();
 
   const TEAM_COLORS = [Colors.teamA, Colors.teamB, Colors.accentGreen, Colors.accentGold];
 
@@ -25,6 +28,7 @@ export default function OnlineGameOverScreen({ route, navigation }) {
   const didWin = myTeam?.teamId === winnerTeamId;
 
   useEffect(() => {
+    if (didWin) playCheer();
     Animated.sequence([
       Animated.delay(100),
       Animated.parallel([
@@ -40,7 +44,7 @@ export default function OnlineGameOverScreen({ route, navigation }) {
         { iterations: 3 },
       ),
     ]).start();
-  }, [fadeAnim, scaleAnim, trophyAnim]);
+  }, [fadeAnim, scaleAnim, trophyAnim, didWin, playCheer]);
 
   const trophyScale = trophyAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.25] });
 
@@ -48,6 +52,7 @@ export default function OnlineGameOverScreen({ route, navigation }) {
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
       <StatusBar barStyle={Colors.statusBar} backgroundColor={Colors.background} />
       <LinearGradient colors={Colors.gradientBg} style={StyleSheet.absoluteFill} />
+      <FloatingBubbles count={14} />
 
       {/* Winner glow */}
       <View style={[styles.winnerGlow, { backgroundColor: winnerColor }]} />
@@ -146,7 +151,7 @@ export default function OnlineGameOverScreen({ route, navigation }) {
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity
-              onPress={() => navigation.navigate('Home')}
+              onPress={() => { playBubblePop(); navigation.navigate('Home'); }}
               activeOpacity={0.85}
               style={[styles.homeBtnWrapper, { shadowColor: Colors.shadow }]}
             >
