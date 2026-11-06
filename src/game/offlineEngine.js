@@ -25,11 +25,16 @@ export const BALL_STATE = {
 /**
  * Create initial game state.
  */
-export function createOfflineGame({ difficulty = 'medium', playerBatsFirst = true } = {}) {
+export function createOfflineGame({ difficulty = 'medium', playerBatsFirst = true, overs = 1 } = {}) {
+  const parsedOvers = (overs && !isNaN(overs) && overs > 0) ? parseInt(overs, 10) : null;
+  const maxBalls = parsedOvers ? parsedOvers * 6 : null;
+
   return {
     difficulty,
     phase: GAME_PHASE.BATTING,
     playerBatsFirst,
+    overs: parsedOvers,
+    maxBalls,
     // Scores
     playerScore: 0,
     botScore: 0,
@@ -39,6 +44,7 @@ export function createOfflineGame({ difficulty = 'medium', playerBatsFirst = tru
     currentInnings: 1,
     playerIsOut: false,
     botIsOut: false,
+    oversCompleted: false,
     // Ball state
     ballState: BALL_STATE.WAITING,
     lastBall: null,
@@ -108,15 +114,43 @@ export function processBall(state, playerNumber) {
 
   if (result.isOut) {
     newState = handleOut(newState, isPlayerBatting);
-  } else if (state.target !== null) {
-    // Check if chasing team has won
-    const chaserScore = isPlayerBatting ? newState.playerScore : newState.botScore;
-    if (hasChaserWon(chaserScore, state.target)) {
-      newState = endGame(newState, isPlayerBatting ? 'player' : 'bot');
-    }
+  } else if (state.target !== null && hasChaserWon(isPlayerBatting ? newState.playerScore : newState.botScore, state.target)) {
+    // Chasing team has reached the target!
+    newState = endGame(newState, isPlayerBatting ? 'player' : 'bot');
+  } else if (state.maxBalls && newState.ballHistory.length >= state.maxBalls) {
+    // Overs limit reached for this innings!
+    newState = handleOversComplete(newState, isPlayerBatting);
   }
 
   return newState;
+}
+
+function handleOversComplete(state, wasPlayerBatting) {
+  if (state.currentInnings === 1) {
+    const inningsScore = wasPlayerBatting ? state.playerScore : state.botScore;
+    const target = calculateTarget(inningsScore);
+
+    return {
+      ...state,
+      phase: GAME_PHASE.INNINGS_BREAK,
+      currentInnings: 2,
+      playerInnings1: wasPlayerBatting ? state.playerScore : 0,
+      botInnings1: !wasPlayerBatting ? state.botScore : 0,
+      target,
+      oversCompleted: true,
+      ballHistory: [],
+      playerHistory: [],
+    };
+  } else {
+    // Second innings overs complete
+    const chaserScore = wasPlayerBatting ? state.playerScore : state.botScore;
+    const target = state.target;
+    const chaserWon = hasChaserWon(chaserScore, target);
+    const winner = chaserWon
+      ? (wasPlayerBatting ? 'player' : 'bot')
+      : (chaserScore === target - 1 ? 'tie' : (wasPlayerBatting ? 'bot' : 'player'));
+    return endGame(state, winner);
+  }
 }
 
 function handleOut(state, wasPlayerBatting) {

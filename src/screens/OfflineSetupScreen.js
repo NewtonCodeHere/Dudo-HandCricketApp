@@ -14,12 +14,20 @@ import { useColors } from '../theme/ThemeContext';
 import { useAudio } from '../context/AudioContext';
 import FloatingBubbles from '../components/FloatingBubbles';
 
+const OVERS_MODES = {
+  SUPER_OVER: 'SUPER_OVER',
+  UNLIMITED: 'UNLIMITED',
+  CUSTOM: 'CUSTOM',
+};
+
 export default function OfflineSetupScreen({ navigation }) {
   const Colors = useColors();
   const { playBubblePop } = useAudio();
   const [difficulty, setDifficulty] = useState('medium');
   const [playerBatsFirst, setPlayerBatsFirst] = useState(true);
   const [playerName, setPlayerName] = useState('');
+  const [oversMode, setOversMode] = useState(OVERS_MODES.SUPER_OVER);
+  const [customOvers, setCustomOvers] = useState(2);
 
   const difficultyOptions = [
     {
@@ -44,10 +52,18 @@ export default function OfflineSetupScreen({ navigation }) {
 
   const startGame = () => {
     playBubblePop();
+    const effectiveOvers =
+      oversMode === OVERS_MODES.SUPER_OVER
+        ? 1
+        : oversMode === OVERS_MODES.UNLIMITED
+        ? null
+        : Math.max(1, Math.min(50, parseInt(customOvers, 10) || 2));
+
     navigation.navigate('OfflineGame', {
       difficulty,
       playerBatsFirst,
       playerName: playerName.trim() || 'You',
+      overs: effectiveOvers,
     });
   };
 
@@ -143,6 +159,137 @@ export default function OfflineSetupScreen({ navigation }) {
             maxLength={16}
             autoCapitalize="words"
           />
+        </View>
+
+        {/* Number of Overs */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: Colors.textMuted }]}>NUMBER OF OVERS</Text>
+          <View style={styles.optionRow}>
+            <TouchableOpacity
+              onPress={() => {
+                playBubblePop();
+                setOversMode(OVERS_MODES.SUPER_OVER);
+              }}
+              style={[
+                styles.oversChip,
+                {
+                  backgroundColor: oversMode === OVERS_MODES.SUPER_OVER ? Colors.primaryTint : Colors.backgroundCard,
+                  borderColor: oversMode === OVERS_MODES.SUPER_OVER ? Colors.primary : Colors.border,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.oversChipText, { color: oversMode === OVERS_MODES.SUPER_OVER ? Colors.primary : Colors.textSecondary }]}>
+                ⚡ Super Over
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                playBubblePop();
+                setOversMode(OVERS_MODES.UNLIMITED);
+              }}
+              style={[
+                styles.oversChip,
+                {
+                  backgroundColor: oversMode === OVERS_MODES.UNLIMITED ? Colors.primaryTint : Colors.backgroundCard,
+                  borderColor: oversMode === OVERS_MODES.UNLIMITED ? Colors.primary : Colors.border,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.oversChipText, { color: oversMode === OVERS_MODES.UNLIMITED ? Colors.primary : Colors.textSecondary }]}>
+                ♾️ Unlimited
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => {
+                playBubblePop();
+                setOversMode(OVERS_MODES.CUSTOM);
+              }}
+              style={[
+                styles.oversChip,
+                {
+                  backgroundColor: oversMode === OVERS_MODES.CUSTOM ? Colors.primaryTint : Colors.backgroundCard,
+                  borderColor: oversMode === OVERS_MODES.CUSTOM ? Colors.primary : Colors.border,
+                },
+              ]}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.oversChipText, { color: oversMode === OVERS_MODES.CUSTOM ? Colors.primary : Colors.textSecondary }]}>
+                ⚙️ Custom
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Custom Overs Stepper & Numeric Editor */}
+          {oversMode === OVERS_MODES.CUSTOM && (
+            <View style={[styles.customOversCard, { backgroundColor: Colors.backgroundCard, borderColor: Colors.border }]}>
+              <Text style={[styles.customOversLabel, { color: Colors.textSecondary }]}>Select Custom Overs:</Text>
+              <View style={styles.stepperContainer}>
+                <TouchableOpacity
+                  onPress={() => {
+                    playBubblePop();
+                    setCustomOvers((prev) => Math.max(1, (parseInt(prev, 10) || 2) - 1));
+                  }}
+                  style={[styles.stepperBtn, { backgroundColor: Colors.primaryTint, borderColor: Colors.primary }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stepperBtnSymbol, { color: Colors.primary }]}>−</Text>
+                </TouchableOpacity>
+
+                <TextInput
+                  style={[
+                    styles.stepperTextInput,
+                    {
+                      backgroundColor: Colors.background,
+                      color: Colors.textPrimary,
+                      borderColor: Colors.borderLight,
+                    },
+                  ]}
+                  keyboardType="number-pad"
+                  value={String(customOvers)}
+                  onChangeText={(val) => {
+                    const clean = val.replace(/[^0-9]/g, '');
+                    if (clean === '') {
+                      setCustomOvers('');
+                    } else {
+                      const num = parseInt(clean, 10);
+                      setCustomOvers(Math.max(1, Math.min(50, num)));
+                    }
+                  }}
+                  onBlur={() => {
+                    if (!customOvers || parseInt(customOvers, 10) < 1) {
+                      setCustomOvers(2);
+                    }
+                  }}
+                  maxLength={2}
+                  textAlign="center"
+                />
+
+                <TouchableOpacity
+                  onPress={() => {
+                    playBubblePop();
+                    setCustomOvers((prev) => Math.min(50, (parseInt(prev, 10) || 1) + 1));
+                  }}
+                  style={[styles.stepperBtn, { backgroundColor: Colors.primaryTint, borderColor: Colors.primary }]}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.stepperBtnSymbol, { color: Colors.primary }]}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Description helper */}
+          <Text style={[styles.oversDesc, { color: Colors.textMuted }]}>
+            {oversMode === OVERS_MODES.SUPER_OVER
+              ? '⚡ 1 Over (6 balls) shootout match'
+              : oversMode === OVERS_MODES.UNLIMITED
+              ? '♾️ Unlimited overs · batsman plays until OUT'
+              : `🏏 ${parseInt(customOvers, 10) || 2} Overs · ${(parseInt(customOvers, 10) || 2) * 6} Balls per innings`}
+          </Text>
         </View>
 
         {/* Difficulty */}
@@ -251,6 +398,59 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     fontSize: Typography.base,
     borderWidth: 1.5,
+  },
+  optionRow: { flexDirection: 'row', gap: Spacing.sm, flexWrap: 'wrap' },
+  oversChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    borderWidth: 1.5,
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  oversChipText: { fontSize: Typography.xs, fontWeight: Typography.bold },
+  customOversCard: {
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  customOversLabel: { fontSize: Typography.sm, fontWeight: Typography.semibold },
+  stepperContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  stepperBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepperBtnSymbol: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    lineHeight: 22,
+  },
+  stepperTextInput: {
+    width: 54,
+    height: 38,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    fontSize: Typography.base,
+    fontWeight: Typography.bold,
+    paddingVertical: 0,
+  },
+  oversDesc: {
+    fontSize: Typography.xs,
+    marginTop: Spacing.xs,
+    fontStyle: 'italic',
   },
   toggleRow: {
     flexDirection: 'row',

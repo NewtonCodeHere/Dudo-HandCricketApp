@@ -35,13 +35,13 @@ const RESULT_DISPLAY_MS = 2000;
 export default function OfflineGameScreen({ route, navigation }) {
   const Colors = useColors();
   const { announceBallResult, playBubblePop, stopSpeech } = useAudio();
-  const { difficulty = 'medium', playerBatsFirst = true, playerName = 'You' } = route.params || {};
+  const { difficulty = 'medium', playerBatsFirst = true, playerName = 'You', overs = 1 } = route.params || {};
 
   const playerDisplayName = (playerName && playerName.trim()) ? playerName.trim() : 'You';
   const playerLabelUpper = playerDisplayName.toUpperCase();
 
   const [gameState, setGameState] = useState(() =>
-    createOfflineGame({ difficulty, playerBatsFirst }),
+    createOfflineGame({ difficulty, playerBatsFirst, overs }),
   );
   const [selectedNumber, setSelectedNumber] = useState(null);
   const [showCountdown, setShowCountdown] = useState(true);
@@ -128,7 +128,7 @@ export default function OfflineGameScreen({ route, navigation }) {
 
   const handlePlayAgain = () => {
     playBubblePop();
-    const fresh = createOfflineGame({ difficulty, playerBatsFirst });
+    const fresh = createOfflineGame({ difficulty, playerBatsFirst, overs });
     setGameState(fresh);
     setSelectedNumber(null);
     setShowResult(false);
@@ -143,10 +143,15 @@ export default function OfflineGameScreen({ route, navigation }) {
 
   const phase = gameState.phase;
   const isGameOver = phase === GAME_PHASE.GAME_OVER;
+  const currentBallsCount = gameState.ballHistory.length;
+  const overNumber = Math.floor(currentBallsCount / 6);
+  const ballInOver = currentBallsCount % 6;
+  const oversStr = `${overNumber}.${ballInOver}${gameState.overs ? `/${gameState.overs}` : ''} Ov`;
+
   const phaseLabel =
     phase === GAME_PHASE.CHASING || gameState.currentInnings === 2
-      ? `2nd Innings · ${playerBatting ? 'You chase' : 'Bot chases'}`
-      : `1st Innings · ${playerBatting ? 'You bat' : 'Bot bats'}`;
+      ? `2nd Innings · ${playerBatting ? `${playerDisplayName} chases` : 'Bot chases'} · ${oversStr}`
+      : `1st Innings · ${playerBatting ? `${playerDisplayName} bats` : 'Bot bats'} · ${oversStr}`;
 
   return (
     <View style={[styles.container, { backgroundColor: Colors.background }]}>
@@ -176,15 +181,31 @@ export default function OfflineGameScreen({ route, navigation }) {
           <TouchableOpacity onPress={handleGoHome} style={styles.homeBtn}>
             <Text style={[styles.homeBtnText, { color: Colors.primary }]}>‹ Home</Text>
           </TouchableOpacity>
-          <View
-            style={[
-              styles.diffBadge,
-              { backgroundColor: Colors.backgroundCard, borderColor: Colors.borderLight },
-            ]}
-          >
-            <Text style={[styles.diffBadgeText, { color: Colors.textMuted }]}>
-              {difficulty.toUpperCase()} AI
-            </Text>
+          <View style={styles.topBadgesRow}>
+            <View
+              style={[
+                styles.diffBadge,
+                { backgroundColor: Colors.primaryTint, borderColor: Colors.borderLight },
+              ]}
+            >
+              <Text style={[styles.diffBadgeText, { color: Colors.primary }]}>
+                {gameState.overs === 1
+                  ? '⚡ 1 Ov (6b)'
+                  : gameState.overs
+                  ? `🏏 ${gameState.overs} Ov (${gameState.maxBalls}b)`
+                  : '♾️ Unlimited'}
+              </Text>
+            </View>
+            <View
+              style={[
+                styles.diffBadge,
+                { backgroundColor: Colors.backgroundCard, borderColor: Colors.borderLight },
+              ]}
+            >
+              <Text style={[styles.diffBadgeText, { color: Colors.textMuted }]}>
+                {difficulty.toUpperCase()} AI
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -277,6 +298,7 @@ export default function OfflineGameScreen({ route, navigation }) {
             playerScore={gameState.playerScore}
             botScore={gameState.botScore}
             playerLabel={playerLabelUpper}
+            overs={gameState.overs}
             onPlayAgain={handlePlayAgain}
             onHome={handleGoHome}
             Colors={Colors}
@@ -291,6 +313,8 @@ export default function OfflineGameScreen({ route, navigation }) {
         firstInningsScore={playerBatsFirst ? gameState.playerInnings1 : gameState.botInnings1}
         target={gameState.target}
         playerLabel={playerDisplayName}
+        overs={gameState.overs}
+        oversCompleted={gameState.oversCompleted}
         onContinue={handleInningsBreakContinue}
         Colors={Colors}
       />
@@ -304,6 +328,7 @@ function GameOverCard({
   playerScore,
   botScore,
   playerLabel = 'YOU',
+  overs,
   onPlayAgain,
   onHome,
   Colors,
@@ -340,6 +365,13 @@ function GameOverCard({
         </Text>
         <Text style={[styles.gameOverTitle, { color: isPlayerWin ? Colors.success : Colors.danger }]}>
           {winMessage}
+        </Text>
+        <Text style={[styles.gameOverOversBadge, { color: Colors.textMuted }]}>
+          {overs === 1
+            ? '⚡ Super Over (6 balls)'
+            : overs
+            ? `🏏 ${overs} Overs (${overs * 6} balls)`
+            : '♾️ Unlimited Overs'}
         </Text>
         <View style={styles.finalScores}>
           <ScoreRow label={playerLabel} score={playerScore} highlight={isPlayerWin} Colors={Colors} />
@@ -389,6 +421,8 @@ function InningsBreakModal({
   firstInningsScore,
   target,
   playerLabel = 'You',
+  overs,
+  oversCompleted,
   onContinue,
   Colors,
 }) {
@@ -413,7 +447,9 @@ function InningsBreakModal({
             {firstInningsScore} RUNS
           </Text>
           <Text style={[styles.modalDesc, { color: Colors.textSecondary }]}>
-            {playerBatsFirst ? `${playerLabel} scored` : 'Bot scored'} {firstInningsScore} runs.
+            {oversCompleted
+              ? `${playerBatsFirst ? playerLabel : 'Bot'} completed ${overs || ''} ${overs === 1 ? 'over' : 'overs'} and scored ${firstInningsScore} runs.`
+              : `${playerBatsFirst ? playerLabel : 'Bot'} was OUT for ${firstInningsScore} runs.`}
           </Text>
           <View
             style={[
@@ -458,6 +494,11 @@ const styles = StyleSheet.create({
   },
   homeBtn: {},
   homeBtnText: { fontSize: Typography.lg, fontWeight: Typography.semibold },
+  topBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
   diffBadge: {
     paddingHorizontal: Spacing.md,
     paddingVertical: 4,
@@ -535,6 +576,11 @@ const styles = StyleSheet.create({
     fontWeight: Typography.black,
     textAlign: 'center',
     letterSpacing: 1,
+    marginBottom: Spacing.xs,
+  },
+  gameOverOversBadge: {
+    fontSize: Typography.xs,
+    fontStyle: 'italic',
     marginBottom: Spacing.lg,
   },
   finalScores: {
