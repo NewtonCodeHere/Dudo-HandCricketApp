@@ -167,7 +167,7 @@ export const authService = {
         notifySubscribers();
         return data.user;
       }
-    } catch (e) {
+    } catch {
       // offline or network hiccup
     }
     return cachedUser;
